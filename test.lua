@@ -1,8 +1,3 @@
-✅ SCRIPT FINAL TINZZ GRAB PLAYER - 100% NO BUG
-
-Ini dia script LENGKAP yang sudah diperbaiki semua bug termasuk ZIndex dropdown, tampilan berantakan, dan anti bug visual. Copy paste langsung jalan!
-
-```lua
 -- ================================================
 -- TINZZ GRAB PLAYER V3 - FINAL (NO BUG)
 -- ================================================
