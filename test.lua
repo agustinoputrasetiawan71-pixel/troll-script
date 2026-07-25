@@ -1,7 +1,6 @@
 --[[
-    TINZZxXITERS AIM & ESP V3
-    Fitur: AIM (Sticky/Wall/Team), ESP (Name/Line/Box)
-    Style: Pink, Hitam, Biru Modern
+    TINZZxXITERS AIM & ESP V4
+    Fix: Scroll, Layout, Tampilan Rapi
 ]]
 
 local Players = game:GetService("Players")
@@ -19,6 +18,7 @@ local THEME = {
     Blue = Color3.fromRGB(0, 150, 255),
     White = Color3.fromRGB(255, 255, 255),
     OffText = Color3.fromRGB(160, 160, 160),
+    Glass = Color3.fromRGB(255, 255, 255),
 }
 
 -- ===== SETTINGS =====
@@ -36,7 +36,7 @@ local Settings = {
     ESPName = true,
     ESPBox = false,
     ESPLine = false,
-    ESPLinePosition = "Top", -- "Top", "Center", "Bottom"
+    ESPLinePosition = "Top",
     ESPLineThickness = 1,
     RainbowStyle = false,
 }
@@ -77,9 +77,9 @@ ToggleBtn.TextSize = 20
 
 -- ===== MAIN FRAME =====
 local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -200, 0.5, -180)
+local VisiblePos = UDim2.new(0.5, -200, 0.5, -200)
 local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
-Main.Size = UDim2.new(0, 400, 0, 360)
+Main.Size = UDim2.new(0, 400, 0, 400)
 Main.Position = HiddenPos
 Main.BackgroundColor3 = THEME.Black
 Main.Visible = false
@@ -93,36 +93,37 @@ MainStroke.Color = THEME.Pink
 
 -- ===== TITLE =====
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.Text = "✦ TINZZxXITERS ✦"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
+Title.TextSize = 20
 Title.BackgroundTransparency = 1
 Title.TextColor3 = THEME.Pink
 
 local SubTitle = Instance.new("TextLabel", Main)
-SubTitle.Size = UDim2.new(1, 0, 0, 20)
-SubTitle.Position = UDim2.new(0, 0, 0, 30)
+SubTitle.Size = UDim2.new(1, 0, 0, 18)
+SubTitle.Position = UDim2.new(0, 0, 0, 28)
 SubTitle.BackgroundTransparency = 1
 SubTitle.Text = "AIM • ESP • VISUAL"
 SubTitle.Font = Enum.Font.Gotham
-SubTitle.TextSize = 12
+SubTitle.TextSize = 11
 SubTitle.TextColor3 = THEME.Blue
 SubTitle.TextXAlignment = Enum.TextXAlignment.Center
 
 local CloseBtn = Instance.new("TextButton", Main)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 8)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "✕"
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextColor3 = THEME.Pink
-CloseBtn.TextSize = 22
+CloseBtn.TextSize = 20
 
 -- ===== TAB SYSTEM =====
 local TabFrame = Instance.new("Frame", Main)
-TabFrame.Size = UDim2.new(1, -20, 0, 35)
-TabFrame.Position = UDim2.new(0, 10, 0, 52)
+TabFrame.Size = UDim2.new(1, -20, 0, 32)
+TabFrame.Position = UDim2.new(0, 10, 0, 50)
 TabFrame.BackgroundTransparency = 1
 
 local Tabs = {}
@@ -139,33 +140,41 @@ local function CreateTab(name, xPos)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 13
     btn.TextColor3 = THEME.White
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     return btn
 end
 
 local TabAIM = CreateTab("✦ AIM", 0)
-local TabESP = CreateTab("✦ ESP", 0.25)
+local TabESP = CreateTab("✦ ESP", 0.26)
 
 -- ===== SCROLL AREA =====
 local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(1, -20, 1, -100)
-Scroll.Position = UDim2.new(0, 10, 0, 92)
+Scroll.Size = UDim2.new(1, -20, 1, -110)
+Scroll.Position = UDim2.new(0, 10, 0, 88)
 Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-Scroll.ScrollBarThickness = 2
+Scroll.ScrollBarThickness = 3
 Scroll.ScrollBarImageColor3 = THEME.Pink
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 
-local UIList = Instance.new("UIListLayout", Scroll)
-UIList.Padding = UDim.new(0, 5)
+-- ===== CONTENT CONTAINERS =====
+local AIMContent = Instance.new("Frame", Scroll)
+AIMContent.Size = UDim2.new(1, 0, 0, 0)
+AIMContent.BackgroundTransparency = 1
+AIMContent.Visible = true
+
+local ESPContent = Instance.new("Frame", Scroll)
+ESPContent.Size = UDim2.new(1, 0, 0, 0)
+ESPContent.BackgroundTransparency = 1
+ESPContent.Visible = false
 
 -- ===== FUNGSI TOGGLE =====
 local function AddToggle(parent, text, settingKey, default)
     local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, -5, 0, 38)
+    btn.Size = UDim2.new(1, 0, 0, 34)
     btn.BackgroundColor3 = THEME.DarkBlack
     btn.Text = ""
     btn.AutoButtonColor = false
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     
     local BStroke = Instance.new("UIStroke", btn)
     BStroke.Thickness = 1
@@ -200,20 +209,23 @@ local function AddToggle(parent, text, settingKey, default)
         Status.Text = s and "ON" or "OFF"
         Status.TextColor3 = s and THEME.Pink or THEME.OffText
         if settingKey == "CircleVis" then Circle.Visible = s end
-        if settingKey == "ESPLine" or settingKey == "ESPBox" or settingKey == "ESPName" then
-            if Settings.ESP then updateESP() end
+        if settingKey == "ESP" or settingKey == "ESPLine" or settingKey == "ESPBox" or settingKey == "ESPName" then
+            if Settings.ESP then updateESP() else clearESP() end
         end
     end)
+    
+    return btn
 end
 
 -- ===== FUNGSI SLIDER =====
 local function AddSlider(parent, text, settingKey, min, max, default)
     local frame = Instance.new("Frame", parent)
-    frame.Size = UDim2.new(1, -5, 0, 50)
+    frame.Size = UDim2.new(1, 0, 0, 45)
     frame.BackgroundTransparency = 1
     
     local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Size = UDim2.new(1, 0, 0, 18)
+    label.Position = UDim2.new(0, 0, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text .. ": " .. tostring(default)
     label.TextColor3 = THEME.White
@@ -223,7 +235,7 @@ local function AddSlider(parent, text, settingKey, min, max, default)
     
     local slider = Instance.new("Frame", frame)
     slider.Size = UDim2.new(1, 0, 0, 6)
-    slider.Position = UDim2.new(0, 0, 0, 30)
+    slider.Position = UDim2.new(0, 0, 0, 26)
     slider.BackgroundColor3 = THEME.DarkBlack
     slider.BorderSizePixel = 1
     slider.BorderColor3 = THEME.Blue
@@ -262,17 +274,19 @@ local function AddSlider(parent, text, settingKey, min, max, default)
         if settingKey == "FOV" then Circle.Radius = value end
         if settingKey == "ESPLineThickness" and Settings.ESP then updateESP() end
     end)
+    
+    return frame
 end
 
 -- ===== FUNGSI DROPDOWN =====
 local function AddDropdown(parent, text, settingKey, options, default)
     local frame = Instance.new("Frame", parent)
-    frame.Size = UDim2.new(1, -5, 0, 38)
+    frame.Size = UDim2.new(1, 0, 0, 34)
     frame.BackgroundColor3 = THEME.DarkBlack
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 5)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 4)
     
     local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Size = UDim2.new(0.5, 0, 1, 0)
     label.Position = UDim2.new(0, 12, 0, 0)
     label.BackgroundTransparency = 1
     label.Text = text
@@ -282,8 +296,8 @@ local function AddDropdown(parent, text, settingKey, options, default)
     label.TextXAlignment = Enum.TextXAlignment.Left
     
     local dropdown = Instance.new("TextButton", frame)
-    dropdown.Size = UDim2.new(0.35, 0, 1, -6)
-    dropdown.Position = UDim2.new(0.63, 0, 0, 3)
+    dropdown.Size = UDim2.new(0.4, 0, 1, -6)
+    dropdown.Position = UDim2.new(0.55, 0, 0, 3)
     dropdown.BackgroundColor3 = THEME.Black
     dropdown.BorderSizePixel = 1
     dropdown.BorderColor3 = THEME.Pink
@@ -303,33 +317,42 @@ local function AddDropdown(parent, text, settingKey, options, default)
         Settings[settingKey] = value
         if settingKey == "ESPLinePosition" and Settings.ESP then updateESP() end
     end)
+    
+    return frame
 end
 
 -- ===== BUILD AIM TAB =====
-local AIMContent = Instance.new("Frame", Scroll)
-AIMContent.Size = UDim2.new(1, 0, 0, 250)
-AIMContent.BackgroundTransparency = 1
+local aimY = 0
+local function addAIM(item)
+    item.Position = UDim2.new(0, 0, 0, aimY)
+    aimY = aimY + 40
+    AIMContent.Size = UDim2.new(1, 0, 0, aimY + 10)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, aimY + 30)
+end
 
-AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false)
-AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true)
-AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false)
-AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false)
-AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false)
-AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150)
+addAIM(AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false))
+addAIM(AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true))
+addAIM(AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false))
+addAIM(AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false))
+addAIM(AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false))
+addAIM(AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150))
 
 -- ===== BUILD ESP TAB =====
-local ESPContent = Instance.new("Frame", Scroll)
-ESPContent.Size = UDim2.new(1, 0, 0, 320)
-ESPContent.BackgroundTransparency = 1
-ESPContent.Visible = false
+local espY = 0
+local function addESP(item)
+    item.Position = UDim2.new(0, 0, 0, espY)
+    espY = espY + 40
+    ESPContent.Size = UDim2.new(1, 0, 0, espY + 10)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, espY + 30)
+end
 
-AddToggle(ESPContent, "✦ Enable ESP", "ESP", false)
-AddToggle(ESPContent, "✦ Show Name", "ESPName", true)
-AddToggle(ESPContent, "✦ Show Box", "ESPBox", false)
-AddToggle(ESPContent, "✦ Show Line", "ESPLine", false)
-AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false)
-AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1)
-AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top")
+addESP(AddToggle(ESPContent, "✦ Enable ESP", "ESP", false))
+addESP(AddToggle(ESPContent, "✦ Show Name", "ESPName", true))
+addESP(AddToggle(ESPContent, "✦ Show Box", "ESPBox", false))
+addESP(AddToggle(ESPContent, "✦ Show Line", "ESPLine", false))
+addESP(AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false))
+addESP(AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1))
+addESP(AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top"))
 
 -- ===== TAB SWITCHING =====
 TabAIM.MouseButton1Click:Connect(function()
@@ -340,6 +363,7 @@ TabAIM.MouseButton1Click:Connect(function()
     TabESP.BackgroundColor3 = THEME.DarkBlack
     TabAIM.TextColor3 = THEME.Black
     TabESP.TextColor3 = THEME.White
+    Scroll.CanvasPosition = 0
 end)
 
 TabESP.MouseButton1Click:Connect(function()
@@ -350,6 +374,7 @@ TabESP.MouseButton1Click:Connect(function()
     TabAIM.BackgroundColor3 = THEME.DarkBlack
     TabESP.TextColor3 = THEME.Black
     TabAIM.TextColor3 = THEME.White
+    Scroll.CanvasPosition = 0
 end)
 
 -- Set default tab
@@ -417,18 +442,21 @@ end
 local espObjects = {}
 local nameTags = {}
 
--- ===== UPDATE ESP =====
-local function updateESP()
-    -- Clear old ESP
+-- ===== CLEAR ESP =====
+local function clearESP()
     for _, v in pairs(espObjects) do
-        if v and v.Parent then pcall(function() v:Destroy() end) end
+        pcall(function() v:Destroy() end)
     end
     espObjects = {}
     for _, v in pairs(nameTags) do
-        if v and v.Parent then pcall(function() v:Destroy() end) end
+        pcall(function() v:Destroy() end)
     end
     nameTags = {}
-    
+end
+
+-- ===== UPDATE ESP =====
+local function updateESP()
+    clearESP()
     if not Settings.ESP then return end
     
     local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
@@ -470,7 +498,6 @@ local function updateESP()
                 nameTag.Size = UDim2.new(0, 200, 0, 30)
                 nameTag.AlwaysOnTop = true
                 
-                -- Posisi line berdasarkan setting
                 local pos = Settings.ESPLinePosition
                 if pos == "Top" then
                     nameTag.StudsOffset = Vector3.new(0, 4, 0)
@@ -509,18 +536,15 @@ end)
 RunService.RenderStepped:Connect(function()
     local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
     
-    -- Update Circle
     Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
     Circle.Color = accent
     Circle.Visible = Settings.CircleVis
     Circle.Radius = Settings.FOV
     
-    -- Update UI Colors
     MainStroke.Color = accent
     ToggleStroke.Color = accent
     Title.TextColor3 = accent
     
-    -- AIM STICKY
     if Settings.Sticky then
         local lock = getClosest()
         if lock then 
@@ -534,7 +558,7 @@ local watermark = Instance.new("TextLabel", TixUI)
 watermark.Size = UDim2.new(0, 200, 0, 20)
 watermark.Position = UDim2.new(1, -210, 1, -30)
 watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V3"
+watermark.Text = "✦ TINZZxXITERS ✦ V4"
 watermark.TextColor3 = THEME.Pink
 watermark.TextSize = 12
 watermark.Font = Enum.Font.GothamBold
@@ -550,4 +574,4 @@ local function notify(msg)
 end
 
 notify("✦ System Loaded ✦")
-print("✦ TINZZxXITERS V3 Loaded ✦")
+print("✦ TINZZxXITERS V4 Loaded ✦")
