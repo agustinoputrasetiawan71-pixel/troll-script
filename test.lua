@@ -1,75 +1,87 @@
+--[[
+    TINZZxXITERS AIM & ESP V3
+    Fitur: AIM (Sticky/Wall/Team), ESP (Name/Line/Box)
+    Style: Pink, Hitam, Biru Modern
+]]
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Configuration
-local TixSettings = {
-    Sticky = false,
-    WallCheck = true, -- Defaulted to true per your request
-    TeamCheck = false,
-    ESP = false,
-    Tracers = false,
-    RainbowStyle = false,
-    NPCs = false,
-    FOV = 150,
-    CircleVis = false
+-- ===== THEME COLORS =====
+local THEME = {
+    Pink = Color3.fromRGB(255, 20, 147),
+    DarkPink = Color3.fromRGB(200, 10, 110),
+    Black = Color3.fromRGB(15, 15, 17),
+    DarkBlack = Color3.fromRGB(25, 25, 27),
+    Blue = Color3.fromRGB(0, 150, 255),
+    White = Color3.fromRGB(255, 255, 255),
+    OffText = Color3.fromRGB(160, 160, 160),
 }
 
--- THEME COLORS
-local PrimaryRed = Color3.fromRGB(255, 0, 0)
-local DarkGreyBlack = Color3.fromRGB(15, 15, 17) -- "More black than grey"
-local OffText = Color3.fromRGB(160, 160, 160)
-local DarkBtn = Color3.fromRGB(25, 25, 27)
+-- ===== SETTINGS =====
+local Settings = {
+    -- AIM Settings
+    Sticky = false,
+    WallCheck = true,
+    TeamCheck = false,
+    NPCs = false,
+    FOV = 150,
+    CircleVis = false,
+    
+    -- ESP Settings
+    ESP = false,
+    ESPName = true,
+    ESPBox = false,
+    ESPLine = false,
+    ESPLinePosition = "Top", -- "Top", "Center", "Bottom"
+    ESPLineThickness = 1,
+    RainbowStyle = false,
+}
 
-local function getRainbow()
-    return Color3.fromHSV(tick() % 5 / 5, 0.7, 1)
-end
-
--- Drawings
+-- ===== DRAWINGS =====
 local Circle = Drawing.new("Circle")
 Circle.Visible = false
 Circle.Thickness = 2
 Circle.NumSides = 64
-Circle.Radius = TixSettings.FOV
+Circle.Radius = Settings.FOV
 Circle.Filled = false
 
-local visualCache = {}
-
--- UI Setup
+-- ===== UI SETUP =====
 local TixUI = Instance.new("ScreenGui")
-TixUI.Name = "EZ_AIM_V1"
+TixUI.Name = "TINZZ_AIM_ESP"
 TixUI.Parent = gethui and gethui() or game:GetService("CoreGui")
 TixUI.ResetOnSpawn = false
 
--- Toggle Icon
+-- ===== TOGGLE ICON =====
 local TogglePanel = Instance.new("Frame", TixUI)
-TogglePanel.Size = UDim2.new(0, 45, 0, 45)
-TogglePanel.Position = UDim2.new(0, 20, 0, 20)
-TogglePanel.BackgroundColor3 = DarkGreyBlack
+TogglePanel.Size = UDim2.new(0, 50, 0, 50)
+TogglePanel.Position = UDim2.new(0, 15, 0, 15)
+TogglePanel.BackgroundColor3 = THEME.Black
 TogglePanel.Active = true
 TogglePanel.Draggable = true
-Instance.new("UICorner", TogglePanel)
+Instance.new("UICorner", TogglePanel).CornerRadius = UDim.new(1, 0)
 local ToggleStroke = Instance.new("UIStroke", TogglePanel)
 ToggleStroke.Thickness = 2
-ToggleStroke.Color = PrimaryRed
+ToggleStroke.Color = THEME.Pink
 
 local ToggleBtn = Instance.new("TextButton", TogglePanel)
 ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
 ToggleBtn.BackgroundTransparency = 1
-ToggleBtn.Text = "EZ"
+ToggleBtn.Text = "TZ"
 ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextColor3 = PrimaryRed
-ToggleBtn.TextSize = 18
+ToggleBtn.TextColor3 = THEME.Pink
+ToggleBtn.TextSize = 20
 
--- MAIN FRAME
+-- ===== MAIN FRAME =====
 local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -180, 0.5, -140)
-local HiddenPos = UDim2.new(0.5, -180, 1.2, 0)
-Main.Size = UDim2.new(0, 360, 0, 280) 
+local VisiblePos = UDim2.new(0.5, -200, 0.5, -180)
+local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
+Main.Size = UDim2.new(0, 400, 0, 360)
 Main.Position = HiddenPos
-Main.BackgroundColor3 = DarkGreyBlack
+Main.BackgroundColor3 = THEME.Black
 Main.Visible = false
 Main.Active = true
 Main.Draggable = true
@@ -77,27 +89,274 @@ Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
 local MainStroke = Instance.new("UIStroke", Main)
 MainStroke.Thickness = 2
-MainStroke.Color = PrimaryRed
+MainStroke.Color = THEME.Pink
 
--- TITLE
+-- ===== TITLE =====
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 50)
-Title.Text = "EZ AIM"
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.Text = "✦ TINZZxXITERS ✦"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 24
+Title.TextSize = 22
 Title.BackgroundTransparency = 1
-Title.TextColor3 = PrimaryRed
+Title.TextColor3 = THEME.Pink
+
+local SubTitle = Instance.new("TextLabel", Main)
+SubTitle.Size = UDim2.new(1, 0, 0, 20)
+SubTitle.Position = UDim2.new(0, 0, 0, 30)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = "AIM • ESP • VISUAL"
+SubTitle.Font = Enum.Font.Gotham
+SubTitle.TextSize = 12
+SubTitle.TextColor3 = THEME.Blue
+SubTitle.TextXAlignment = Enum.TextXAlignment.Center
 
 local CloseBtn = Instance.new("TextButton", Main)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 10)
+CloseBtn.Position = UDim2.new(1, -35, 0, 8)
 CloseBtn.BackgroundTransparency = 1
-CloseBtn.Text = "Ã—"
+CloseBtn.Text = "✕"
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = PrimaryRed
-CloseBtn.TextSize = 25
+CloseBtn.TextColor3 = THEME.Pink
+CloseBtn.TextSize = 22
 
--- OPEN/CLOSE LOGIC
+-- ===== TAB SYSTEM =====
+local TabFrame = Instance.new("Frame", Main)
+TabFrame.Size = UDim2.new(1, -20, 0, 35)
+TabFrame.Position = UDim2.new(0, 10, 0, 52)
+TabFrame.BackgroundTransparency = 1
+
+local Tabs = {}
+local CurrentTab = "AIM"
+
+local function CreateTab(name, xPos)
+    local btn = Instance.new("TextButton", TabFrame)
+    btn.Size = UDim2.new(0, 80, 1, 0)
+    btn.Position = UDim2.new(xPos, 0, 0, 0)
+    btn.BackgroundColor3 = THEME.DarkBlack
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = THEME.Pink
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.TextColor3 = THEME.White
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    return btn
+end
+
+local TabAIM = CreateTab("✦ AIM", 0)
+local TabESP = CreateTab("✦ ESP", 0.25)
+
+-- ===== SCROLL AREA =====
+local Scroll = Instance.new("ScrollingFrame", Main)
+Scroll.Size = UDim2.new(1, -20, 1, -100)
+Scroll.Position = UDim2.new(0, 10, 0, 92)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.ScrollBarThickness = 2
+Scroll.ScrollBarImageColor3 = THEME.Pink
+
+local UIList = Instance.new("UIListLayout", Scroll)
+UIList.Padding = UDim.new(0, 5)
+
+-- ===== FUNGSI TOGGLE =====
+local function AddToggle(parent, text, settingKey, default)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(1, -5, 0, 38)
+    btn.BackgroundColor3 = THEME.DarkBlack
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    
+    local BStroke = Instance.new("UIStroke", btn)
+    BStroke.Thickness = 1
+    BStroke.Color = THEME.Pink
+    BStroke.Transparency = 0.5
+
+    local Label = Instance.new("TextLabel", btn)
+    Label.Size = UDim2.new(1, -70, 1, 0)
+    Label.Position = UDim2.new(0, 12, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.Font = Enum.Font.Gotham
+    Label.TextColor3 = THEME.White
+    Label.TextSize = 13
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local Status = Instance.new("TextLabel", btn)
+    Status.Size = UDim2.new(0, 45, 1, 0)
+    Status.Position = UDim2.new(1, -55, 0, 0)
+    Status.BackgroundTransparency = 1
+    Status.Text = default and "ON" or "OFF"
+    Status.Font = Enum.Font.GothamBold
+    Status.TextColor3 = default and THEME.Pink or THEME.OffText
+    Status.TextSize = 12
+    Status.TextXAlignment = Enum.TextXAlignment.Right
+
+    Settings[settingKey] = default
+
+    btn.MouseButton1Click:Connect(function()
+        Settings[settingKey] = not Settings[settingKey]
+        local s = Settings[settingKey]
+        Status.Text = s and "ON" or "OFF"
+        Status.TextColor3 = s and THEME.Pink or THEME.OffText
+        if settingKey == "CircleVis" then Circle.Visible = s end
+        if settingKey == "ESPLine" or settingKey == "ESPBox" or settingKey == "ESPName" then
+            if Settings.ESP then updateESP() end
+        end
+    end)
+end
+
+-- ===== FUNGSI SLIDER =====
+local function AddSlider(parent, text, settingKey, min, max, default)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -5, 0, 50)
+    frame.BackgroundTransparency = 1
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. tostring(default)
+    label.TextColor3 = THEME.White
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local slider = Instance.new("Frame", frame)
+    slider.Size = UDim2.new(1, 0, 0, 6)
+    slider.Position = UDim2.new(0, 0, 0, 30)
+    slider.BackgroundColor3 = THEME.DarkBlack
+    slider.BorderSizePixel = 1
+    slider.BorderColor3 = THEME.Blue
+    
+    local fill = Instance.new("Frame", slider)
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = THEME.Pink
+    fill.BorderSizePixel = 0
+    
+    local drag = Instance.new("TextButton", slider)
+    drag.Size = UDim2.new(0, 14, 0, 14)
+    drag.Position = UDim2.new((default - min) / (max - min), -7, 0, -4)
+    drag.BackgroundColor3 = THEME.White
+    drag.BorderSizePixel = 2
+    drag.BorderColor3 = THEME.Pink
+    drag.Text = ""
+    
+    local value = default
+    local dragging = false
+    
+    drag.MouseButton1Down:Connect(function() dragging = true end)
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    
+    local mouse = LocalPlayer:GetMouse()
+    mouse.Move:Connect(function()
+        if not dragging then return end
+        local pos = math.clamp((mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+        value = min + (max - min) * pos
+        value = math.round(value)
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        drag.Position = UDim2.new(pos, -7, 0, -4)
+        label.Text = text .. ": " .. tostring(value)
+        Settings[settingKey] = value
+        if settingKey == "FOV" then Circle.Radius = value end
+        if settingKey == "ESPLineThickness" and Settings.ESP then updateESP() end
+    end)
+end
+
+-- ===== FUNGSI DROPDOWN =====
+local function AddDropdown(parent, text, settingKey, options, default)
+    local frame = Instance.new("Frame", parent)
+    frame.Size = UDim2.new(1, -5, 0, 38)
+    frame.BackgroundColor3 = THEME.DarkBlack
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 5)
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = THEME.White
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local dropdown = Instance.new("TextButton", frame)
+    dropdown.Size = UDim2.new(0.35, 0, 1, -6)
+    dropdown.Position = UDim2.new(0.63, 0, 0, 3)
+    dropdown.BackgroundColor3 = THEME.Black
+    dropdown.BorderSizePixel = 1
+    dropdown.BorderColor3 = THEME.Pink
+    dropdown.Text = default
+    dropdown.TextColor3 = THEME.White
+    dropdown.TextSize = 12
+    dropdown.Font = Enum.Font.Gotham
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 4)
+    
+    Settings[settingKey] = default
+    local currentIndex = 1
+    
+    dropdown.MouseButton1Click:Connect(function()
+        currentIndex = currentIndex % #options + 1
+        local value = options[currentIndex]
+        dropdown.Text = value
+        Settings[settingKey] = value
+        if settingKey == "ESPLinePosition" and Settings.ESP then updateESP() end
+    end)
+end
+
+-- ===== BUILD AIM TAB =====
+local AIMContent = Instance.new("Frame", Scroll)
+AIMContent.Size = UDim2.new(1, 0, 0, 250)
+AIMContent.BackgroundTransparency = 1
+
+AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false)
+AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true)
+AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false)
+AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false)
+AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false)
+AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150)
+
+-- ===== BUILD ESP TAB =====
+local ESPContent = Instance.new("Frame", Scroll)
+ESPContent.Size = UDim2.new(1, 0, 0, 320)
+ESPContent.BackgroundTransparency = 1
+ESPContent.Visible = false
+
+AddToggle(ESPContent, "✦ Enable ESP", "ESP", false)
+AddToggle(ESPContent, "✦ Show Name", "ESPName", true)
+AddToggle(ESPContent, "✦ Show Box", "ESPBox", false)
+AddToggle(ESPContent, "✦ Show Line", "ESPLine", false)
+AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false)
+AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1)
+AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top")
+
+-- ===== TAB SWITCHING =====
+TabAIM.MouseButton1Click:Connect(function()
+    CurrentTab = "AIM"
+    AIMContent.Visible = true
+    ESPContent.Visible = false
+    TabAIM.BackgroundColor3 = THEME.Pink
+    TabESP.BackgroundColor3 = THEME.DarkBlack
+    TabAIM.TextColor3 = THEME.Black
+    TabESP.TextColor3 = THEME.White
+end)
+
+TabESP.MouseButton1Click:Connect(function()
+    CurrentTab = "ESP"
+    AIMContent.Visible = false
+    ESPContent.Visible = true
+    TabESP.BackgroundColor3 = THEME.Pink
+    TabAIM.BackgroundColor3 = THEME.DarkBlack
+    TabESP.TextColor3 = THEME.Black
+    TabAIM.TextColor3 = THEME.White
+end)
+
+-- Set default tab
+TabAIM.BackgroundColor3 = THEME.Pink
+TabAIM.TextColor3 = THEME.Black
+
+-- ===== OPEN/CLOSE =====
 ToggleBtn.MouseButton1Click:Connect(function()
     Main.Visible = true
     TogglePanel.Visible = false
@@ -111,103 +370,29 @@ CloseBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- SCROLL AREA
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(1, -20, 1, -70)
-Scroll.Position = UDim2.new(0, 10, 0, 60)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0, 0, 2.2, 0)
-Scroll.ScrollBarThickness = 2
-Scroll.ScrollBarImageColor3 = PrimaryRed
-
-local UIList = Instance.new("UIListLayout", Scroll)
-UIList.Padding = UDim.new(0, 6)
-
-local function AddToggle(text, settingKey)
-    local btn = Instance.new("TextButton", Scroll)
-    btn.Size = UDim2.new(1, -5, 0, 42)
-    btn.BackgroundColor3 = DarkBtn
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    Instance.new("UICorner", btn)
-    
-    local BStroke = Instance.new("UIStroke", btn)
-    BStroke.Thickness = 1
-    BStroke.Color = PrimaryRed
-    BStroke.Transparency = 0.8 -- Subtle border for buttons
-
-    local Label = Instance.new("TextLabel", btn)
-    Label.Size = UDim2.new(1, -60, 1, 0)
-    Label.Position = UDim2.new(0, 15, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.Font = Enum.Font.GothamBold
-    Label.TextColor3 = PrimaryRed -- All text red per request
-    Label.TextSize = 14
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local Status = Instance.new("TextLabel", btn)
-    Status.Size = UDim2.new(0, 40, 1, 0)
-    Status.Position = UDim2.new(1, -55, 0, 0)
-    Status.BackgroundTransparency = 1
-    Status.Text = "OFF"
-    Status.Font = Enum.Font.GothamBold
-    Status.TextColor3 = OffText
-    Status.TextSize = 13
-    Status.TextXAlignment = Enum.TextXAlignment.Right
-
-    btn.MouseButton1Click:Connect(function()
-        TixSettings[settingKey] = not TixSettings[settingKey]
-        local s = TixSettings[settingKey]
-        
-        local targetColor = s and Color3.fromRGB(45, 10, 10) or DarkBtn
-        TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
-        
-        Status.Text = s and "ON" or "OFF"
-        Status.TextColor3 = s and PrimaryRed or OffText
-        if settingKey == "CircleVis" then Circle.Visible = s end
-    end)
-    return {Label = Label, Status = Status, Active = function() return TixSettings[settingKey] end}
-end
-
-local indicators = {
-    Sticky = AddToggle("Sticky Aim", "Sticky"),
-    Walls = AddToggle("Wall Check", "WallCheck"),
-    Teams = AddToggle("Team Check", "TeamCheck"),
-    ESP = AddToggle("Visual ESP", "ESP"),
-    Tracers = AddToggle("Tracers", "Tracers"),
-    NPCs = AddToggle("Include NPCs", "NPCs"),
-    Rain = AddToggle("Rainbow Mode", "RainbowStyle"),
-    FOV = AddToggle("Show FOV", "CircleVis")
-}
-
--- Wall Check Implementation
+-- ===== WALL CHECK =====
 local function isVisible(targetPart)
-    if not TixSettings.WallCheck then return true end
-    local castPoints = {targetPart.Position}
+    if not Settings.WallCheck then return true end
     local ignoreList = {LocalPlayer.Character, Camera}
     local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 1000)
-    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
-    
-    if hit and hit:IsDescendantOf(targetPart.Parent) then
-        return true
-    end
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+    if hit and hit:IsDescendantOf(targetPart.Parent) then return true end
     return false
 end
 
--- Targeting Logic
+-- ===== GET CLOSEST TARGET =====
 local function getClosest()
-    local target, shortestFOV = nil, TixSettings.FOV
+    local target, shortestFOV = nil, Settings.FOV
     local potentials = {}
     
     for _,v in pairs(Players:GetPlayers()) do
         if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-            if TixSettings.TeamCheck and v.Team == LocalPlayer.Team then continue end
+            if Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
             table.insert(potentials, v.Character.Head)
         end
     end
     
-    if TixSettings.NPCs then
+    if Settings.NPCs then
         for _,v in pairs(workspace:GetDescendants()) do
             if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Head") and v.Humanoid.Health > 0 then
                 if not Players:GetPlayerFromCharacter(v) then table.insert(potentials, v.Head) end
@@ -228,50 +413,141 @@ local function getClosest()
     return target
 end
 
--- Main Loop
-RunService.RenderStepped:Connect(function()
-    local accent = TixSettings.RainbowStyle and getRainbow() or PrimaryRed
+-- ===== ESP VARIABLES =====
+local espObjects = {}
+local nameTags = {}
+
+-- ===== UPDATE ESP =====
+local function updateESP()
+    -- Clear old ESP
+    for _, v in pairs(espObjects) do
+        if v and v.Parent then pcall(function() v:Destroy() end) end
+    end
+    espObjects = {}
+    for _, v in pairs(nameTags) do
+        if v and v.Parent then pcall(function() v:Destroy() end) end
+    end
+    nameTags = {}
     
+    if not Settings.ESP then return end
+    
+    local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
+    
+    for _, target in pairs(Players:GetPlayers()) do
+        if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = target.Character.HumanoidRootPart
+            local humanoid = target.Character:FindFirstChild("Humanoid")
+            
+            if not humanoid or humanoid.Health <= 0 then continue end
+            
+            -- LINE
+            if Settings.ESPLine then
+                local line = Instance.new("SelectionBox")
+                line.Color3 = accent
+                line.Transparency = 0.3
+                line.LineThickness = Settings.ESPLineThickness
+                line.Adornee = rootPart
+                line.Parent = rootPart
+                table.insert(espObjects, line)
+            end
+            
+            -- BOX
+            if Settings.ESPBox then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Size = Vector3.new(3, 5, 1.5)
+                box.Color3 = accent
+                box.Transparency = 0.3
+                box.ZIndex = 0
+                box.AlwaysOnTop = true
+                box.Adornee = rootPart
+                box.Parent = rootPart
+                table.insert(espObjects, box)
+            end
+            
+            -- NAME
+            if Settings.ESPName then
+                local nameTag = Instance.new("BillboardGui")
+                nameTag.Size = UDim2.new(0, 200, 0, 30)
+                nameTag.AlwaysOnTop = true
+                
+                -- Posisi line berdasarkan setting
+                local pos = Settings.ESPLinePosition
+                if pos == "Top" then
+                    nameTag.StudsOffset = Vector3.new(0, 4, 0)
+                elseif pos == "Center" then
+                    nameTag.StudsOffset = Vector3.new(0, 0, 0)
+                elseif pos == "Bottom" then
+                    nameTag.StudsOffset = Vector3.new(0, -3, 0)
+                end
+                
+                nameTag.Parent = rootPart
+                
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = target.Name .. " [" .. math.floor(humanoid.Health) .. "HP]"
+                label.TextColor3 = accent
+                label.TextSize = 14
+                label.TextStrokeTransparency = 0.2
+                label.TextStrokeColor3 = THEME.Black
+                label.Font = Enum.Font.GothamBold
+                label.Parent = nameTag
+                table.insert(nameTags, nameTag)
+            end
+        end
+    end
+end
+
+-- ===== AUTO UPDATE ESP =====
+RunService.RenderStepped:Connect(function()
+    if Settings.ESP then
+        updateESP()
+    end
+end)
+
+-- ===== MAIN LOOP =====
+RunService.RenderStepped:Connect(function()
+    local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
+    
+    -- Update Circle
     Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
     Circle.Color = accent
+    Circle.Visible = Settings.CircleVis
+    Circle.Radius = Settings.FOV
+    
+    -- Update UI Colors
     MainStroke.Color = accent
     ToggleStroke.Color = accent
     Title.TextColor3 = accent
-
-    if TixSettings.Sticky then
+    
+    -- AIM STICKY
+    if Settings.Sticky then
         local lock = getClosest()
         if lock then 
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, lock.Position) 
         end
     end
-
-    -- Visual Processing (ESP/Tracers)
-    local targets = {}
-    for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character then table.insert(targets, p.Character) end end
-    
-    for _, char in pairs(targets) do
-        if not visualCache[char] then
-            visualCache[char] = {Line = Drawing.new("Line"), High = Instance.new("Highlight", TixUI)}
-        end
-        local visual = visualCache[char]
-        local head = char:FindFirstChild("Head")
-        local hum = char:FindFirstChild("Humanoid")
-        local isAlive = head and hum and hum.Health > 0
-        
-        if TixSettings.Tracers and isAlive then
-            local pos, vis = Camera:WorldToViewportPoint(head.Position)
-            if vis then
-                visual.Line.Visible = true
-                visual.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                visual.Line.To = Vector2.new(pos.X, pos.Y)
-                visual.Line.Color = accent
-                visual.Line.Thickness = 1.5
-            else visual.Line.Visible = false end
-        else visual.Line.Visible = false end
-
-        visual.High.Enabled = TixSettings.ESP and isAlive
-        visual.High.Adornee = char
-        visual.High.FillColor = accent
-        visual.High.OutlineColor = Color3.new(1,1,1)
-    end
 end)
+
+-- ===== WATERMARK =====
+local watermark = Instance.new("TextLabel", TixUI)
+watermark.Size = UDim2.new(0, 200, 0, 20)
+watermark.Position = UDim2.new(1, -210, 1, -30)
+watermark.BackgroundTransparency = 1
+watermark.Text = "✦ TINZZxXITERS ✦ V3"
+watermark.TextColor3 = THEME.Pink
+watermark.TextSize = 12
+watermark.Font = Enum.Font.GothamBold
+watermark.TextXAlignment = Enum.TextXAlignment.Right
+
+-- ===== NOTIFICATION =====
+local function notify(msg)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "TINZZxXITERS",
+        Text = msg,
+        Duration = 2
+    })
+end
+
+notify("✦ System Loaded ✦")
+print("✦ TINZZxXITERS V3 Loaded ✦")
