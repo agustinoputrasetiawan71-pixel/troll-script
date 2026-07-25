@@ -1,6 +1,7 @@
 --[[
-    TINZZxXITERS AIM & ESP V5
-    Fix: Layout dengan UIListLayout
+    TINZZxXITERS AIM & ESP V6
+    Menggunakan logika ESP dari script referensi
+    Fitur: Highlight ESP, Tracers, Name Tags
 ]]
 
 local Players = game:GetService("Players")
@@ -22,19 +23,23 @@ local THEME = {
 
 -- ===== SETTINGS =====
 local Settings = {
+    -- AIM
     Sticky = false,
     WallCheck = true,
     TeamCheck = false,
     NPCs = false,
     FOV = 150,
     CircleVis = false,
+    
+    -- ESP (pakai logika dari script referensi)
     ESP = false,
+    Tracers = false,
+    RainbowStyle = false,
+    
+    -- Tambahan custom
     ESPName = true,
     ESPBox = false,
-    ESPLine = false,
     ESPLinePosition = "Top",
-    ESPLineThickness = 1,
-    RainbowStyle = false,
 }
 
 -- ===== DRAWINGS =====
@@ -44,6 +49,9 @@ Circle.Thickness = 2
 Circle.NumSides = 64
 Circle.Radius = Settings.FOV
 Circle.Filled = false
+
+-- ===== VISUAL CACHE (dari script referensi) =====
+local visualCache = {}
 
 -- ===== UI SETUP =====
 local TixUI = Instance.new("ScreenGui")
@@ -73,9 +81,9 @@ ToggleBtn.TextSize = 20
 
 -- ===== MAIN FRAME =====
 local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -210, 0.5, -220)
-local HiddenPos = UDim2.new(0.5, -210, 1.2, 0)
-Main.Size = UDim2.new(0, 420, 0, 440)
+local VisiblePos = UDim2.new(0.5, -200, 0.5, -180)
+local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
+Main.Size = UDim2.new(0, 400, 0, 380)
 Main.Position = HiddenPos
 Main.BackgroundColor3 = THEME.Black
 Main.Visible = false
@@ -159,23 +167,22 @@ ESPContent.Size = UDim2.new(1, 0, 0, 0)
 ESPContent.BackgroundTransparency = 1
 ESPContent.Visible = false
 
--- ===== UIListLayout untuk AIM =====
+-- ===== UIListLayout =====
 local aimLayout = Instance.new("UIListLayout", AIMContent)
 aimLayout.Padding = UDim.new(0, 4)
 aimLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- ===== UIListLayout untuk ESP =====
 local espLayout = Instance.new("UIListLayout", ESPContent)
 espLayout.Padding = UDim.new(0, 4)
 espLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- ===== FUNGSI UPDATE SIZE =====
+-- ===== UPDATE SIZE =====
 local function updateSize()
     local aimHeight = aimLayout.AbsoluteContentSize.Y
     local espHeight = espLayout.AbsoluteContentSize.Y
     AIMContent.Size = UDim2.new(1, 0, 0, aimHeight + 5)
     ESPContent.Size = UDim2.new(1, 0, 0, espHeight + 5)
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(aimHeight, espHeight) + 20)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(aimHeight, espHeight) + 30)
 end
 
 -- ===== FUNGSI TOGGLE =====
@@ -221,9 +228,6 @@ local function AddToggle(parent, text, settingKey, default, order)
         Status.Text = s and "ON" or "OFF"
         Status.TextColor3 = s and THEME.Pink or THEME.OffText
         if settingKey == "CircleVis" then Circle.Visible = s end
-        if settingKey == "ESP" or settingKey == "ESPLine" or settingKey == "ESPBox" or settingKey == "ESPName" then
-            if Settings.ESP then updateESP() else clearESP() end
-        end
     end)
     
     return btn
@@ -285,7 +289,6 @@ local function AddSlider(parent, text, settingKey, min, max, default, order)
         label.Text = text .. ": " .. tostring(value)
         Settings[settingKey] = value
         if settingKey == "FOV" then Circle.Radius = value end
-        if settingKey == "ESPLineThickness" and Settings.ESP then updateESP() end
     end)
     
     return frame
@@ -329,7 +332,6 @@ local function AddDropdown(parent, text, settingKey, options, default, order)
         local value = options[currentIndex]
         dropdown.Text = value
         Settings[settingKey] = value
-        if settingKey == "ESPLinePosition" and Settings.ESP then updateESP() end
     end)
     
     return frame
@@ -345,14 +347,13 @@ AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150, 6)
 
 -- ===== BUILD ESP TAB =====
 AddToggle(ESPContent, "✦ Enable ESP", "ESP", false, 1)
-AddToggle(ESPContent, "✦ Show Name", "ESPName", true, 2)
-AddToggle(ESPContent, "✦ Show Box", "ESPBox", false, 3)
-AddToggle(ESPContent, "✦ Show Line", "ESPLine", false, 4)
-AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false, 5)
-AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1, 6)
-AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 7)
+AddToggle(ESPContent, "✦ Tracers (Line)", "Tracers", false, 2)
+AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false, 3)
+AddToggle(ESPContent, "✦ Show Name", "ESPName", true, 4)
+AddToggle(ESPContent, "✦ Show Box", "ESPBox", false, 5)
+AddDropdown(ESPContent, "✦ Name Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 6)
 
--- ===== UPDATE SIZE AFTER BUILD =====
+-- ===== UPDATE SIZE =====
 task.wait(0.1)
 updateSize()
 aimLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
@@ -381,7 +382,6 @@ TabESP.MouseButton1Click:Connect(function()
     updateSize()
 end)
 
--- Set default tab
 TabAIM.BackgroundColor3 = THEME.Pink
 TabAIM.TextColor3 = THEME.Black
 
@@ -442,60 +442,87 @@ local function getClosest()
     return target
 end
 
--- ===== ESP VARIABLES =====
-local espObjects = {}
-local nameTags = {}
-
--- ===== CLEAR ESP =====
-local function clearESP()
-    for _, v in pairs(espObjects) do
-        pcall(function() v:Destroy() end)
-    end
-    espObjects = {}
-    for _, v in pairs(nameTags) do
-        pcall(function() v:Destroy() end)
-    end
-    nameTags = {}
+-- ===== GET RAINBOW =====
+local function getRainbow()
+    return Color3.fromHSV(tick() % 5 / 5, 0.7, 1)
 end
 
--- ===== UPDATE ESP =====
-local function updateESP()
-    clearESP()
-    if not Settings.ESP then return end
+-- ===== MAIN LOOP (dari script referensi) =====
+RunService.RenderStepped:Connect(function()
+    local accent = Settings.RainbowStyle and getRainbow() or THEME.Pink
     
-    local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
+    -- Update Circle
+    Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    Circle.Color = accent
+    Circle.Visible = Settings.CircleVis
+    Circle.Radius = Settings.FOV
     
-    for _, target in pairs(Players:GetPlayers()) do
-        if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = target.Character.HumanoidRootPart
-            local humanoid = target.Character:FindFirstChild("Humanoid")
-            
-            if not humanoid or humanoid.Health <= 0 then continue end
-            
-            if Settings.ESPLine then
-                local line = Instance.new("SelectionBox")
-                line.Color3 = accent
-                line.Transparency = 0.3
-                line.LineThickness = Settings.ESPLineThickness
-                line.Adornee = rootPart
-                line.Parent = rootPart
-                table.insert(espObjects, line)
+    -- Update UI Colors
+    MainStroke.Color = accent
+    ToggleStroke.Color = accent
+    Title.TextColor3 = accent
+
+    -- AIM STICKY
+    if Settings.Sticky then
+        local lock = getClosest()
+        if lock then 
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, lock.Position) 
+        end
+    end
+
+    -- ===== VISUAL PROCESSING (dari script referensi) =====
+    local targets = {}
+    for _, p in pairs(Players:GetPlayers()) do 
+        if p ~= LocalPlayer and p.Character then 
+            table.insert(targets, p.Character) 
+        end 
+    end
+    
+    for _, char in pairs(targets) do
+        -- Buat cache jika belum ada
+        if not visualCache[char] then
+            visualCache[char] = {
+                Line = Drawing.new("Line"),
+                Highlight = Instance.new("Highlight", TixUI)
+            }
+        end
+        
+        local visual = visualCache[char]
+        local head = char:FindFirstChild("Head")
+        local hum = char:FindFirstChild("Humanoid")
+        local isAlive = head and hum and hum.Health > 0
+        
+        -- ===== TRACERS (Line dari player ke target) =====
+        if Settings.Tracers and isAlive then
+            local pos, vis = Camera:WorldToViewportPoint(head.Position)
+            if vis then
+                visual.Line.Visible = true
+                visual.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                visual.Line.To = Vector2.new(pos.X, pos.Y)
+                visual.Line.Color = accent
+                visual.Line.Thickness = 1.5
+            else
+                visual.Line.Visible = false
             end
-            
-            if Settings.ESPBox then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Size = Vector3.new(3, 5, 1.5)
-                box.Color3 = accent
-                box.Transparency = 0.3
-                box.ZIndex = 0
-                box.AlwaysOnTop = true
-                box.Adornee = rootPart
-                box.Parent = rootPart
-                table.insert(espObjects, box)
-            end
-            
-            if Settings.ESPName then
-                local nameTag = Instance.new("BillboardGui")
+        else
+            visual.Line.Visible = false
+        end
+
+        -- ===== HIGHLIGHT ESP (dari script referensi) =====
+        visual.Highlight.Enabled = Settings.ESP and isAlive
+        visual.Highlight.Adornee = char
+        visual.Highlight.FillColor = accent
+        visual.Highlight.OutlineColor = Color3.new(1, 1, 1)
+        visual.Highlight.FillTransparency = 0.3
+        visual.Highlight.OutlineTransparency = 0.2
+        
+        -- ===== NAME TAG (Custom tambahan) =====
+        if Settings.ESPName and isAlive then
+            -- Cari atau buat name tag
+            local nameTag = char:FindFirstChild("TINZZ_NameTag")
+            if not nameTag then
+                nameTag = Instance.new("BillboardGui")
+                nameTag.Name = "TINZZ_NameTag"
                 nameTag.Size = UDim2.new(0, 200, 0, 30)
                 nameTag.AlwaysOnTop = true
                 
@@ -508,48 +535,51 @@ local function updateESP()
                     nameTag.StudsOffset = Vector3.new(0, -3, 0)
                 end
                 
-                nameTag.Parent = rootPart
+                nameTag.Parent = char
                 
                 local label = Instance.new("TextLabel")
+                label.Name = "Label"
                 label.Size = UDim2.new(1, 0, 1, 0)
                 label.BackgroundTransparency = 1
-                label.Text = target.Name .. " [" .. math.floor(humanoid.Health) .. "HP]"
                 label.TextColor3 = accent
                 label.TextSize = 14
                 label.TextStrokeTransparency = 0.2
                 label.TextStrokeColor3 = THEME.Black
                 label.Font = Enum.Font.GothamBold
                 label.Parent = nameTag
-                table.insert(nameTags, nameTag)
             end
+            
+            -- Update label
+            local label = nameTag:FindFirstChild("Label")
+            if label then
+                label.Text = char.Name .. " [" .. math.floor(hum.Health) .. "HP]"
+                label.TextColor3 = accent
+            end
+            nameTag.Enabled = true
+        else
+            -- Hapus name tag jika dimatikan
+            local nameTag = char:FindFirstChild("TINZZ_NameTag")
+            if nameTag then nameTag:Destroy() end
         end
-    end
-end
-
--- ===== AUTO UPDATE ESP =====
-RunService.RenderStepped:Connect(function()
-    if Settings.ESP then
-        updateESP()
-    end
-end)
-
--- ===== MAIN LOOP =====
-RunService.RenderStepped:Connect(function()
-    local accent = Settings.RainbowStyle and Color3.fromHSV(tick() % 5 / 5, 0.7, 1) or THEME.Pink
-    
-    Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    Circle.Color = accent
-    Circle.Visible = Settings.CircleVis
-    Circle.Radius = Settings.FOV
-    
-    MainStroke.Color = accent
-    ToggleStroke.Color = accent
-    Title.TextColor3 = accent
-    
-    if Settings.Sticky then
-        local lock = getClosest()
-        if lock then 
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, lock.Position) 
+        
+        -- ===== BOX (Custom tambahan) =====
+        if Settings.ESPBox and isAlive then
+            local box = char:FindFirstChild("TINZZ_Box")
+            if not box then
+                box = Instance.new("BoxHandleAdornment")
+                box.Name = "TINZZ_Box"
+                box.Size = Vector3.new(3, 5, 1.5)
+                box.Transparency = 0.3
+                box.ZIndex = 0
+                box.AlwaysOnTop = true
+                box.Adornee = char:FindFirstChild("HumanoidRootPart")
+                box.Parent = char
+            end
+            box.Color3 = accent
+            box.Visible = true
+        else
+            local box = char:FindFirstChild("TINZZ_Box")
+            if box then box:Destroy() end
         end
     end
 end)
@@ -559,7 +589,7 @@ local watermark = Instance.new("TextLabel", TixUI)
 watermark.Size = UDim2.new(0, 200, 0, 20)
 watermark.Position = UDim2.new(1, -210, 1, -30)
 watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V5"
+watermark.Text = "✦ TINZZxXITERS ✦ V6"
 watermark.TextColor3 = THEME.Pink
 watermark.TextSize = 12
 watermark.Font = Enum.Font.GothamBold
@@ -575,4 +605,4 @@ local function notify(msg)
 end
 
 notify("✦ System Loaded ✦")
-print("✦ TINZZxXITERS V5 Loaded ✦")
+print("✦ TINZZxXITERS V6 Loaded ✦")
