@@ -1,7 +1,6 @@
 --[[
-    TINZZxXITERS AIM & ESP V6
-    Menggunakan logika ESP dari script referensi
-    Fitur: Highlight ESP, Tracers, Name Tags
+    TINZZxXITERS AIM & ESP V7 - BAGIAN 1
+    Fix: ESP warna, Line thickness, Dropdown, Name position
 ]]
 
 local Players = game:GetService("Players")
@@ -31,14 +30,14 @@ local Settings = {
     FOV = 150,
     CircleVis = false,
     
-    -- ESP (pakai logika dari script referensi)
+    -- ESP
     ESP = false,
     Tracers = false,
     RainbowStyle = false,
-    
-    -- Tambahan custom
     ESPName = true,
     ESPBox = false,
+    ESPLine = false,
+    ESPLineThickness = 1,
     ESPLinePosition = "Top",
 }
 
@@ -50,7 +49,7 @@ Circle.NumSides = 64
 Circle.Radius = Settings.FOV
 Circle.Filled = false
 
--- ===== VISUAL CACHE (dari script referensi) =====
+-- ===== VISUAL CACHE =====
 local visualCache = {}
 
 -- ===== UI SETUP =====
@@ -81,9 +80,9 @@ ToggleBtn.TextSize = 20
 
 -- ===== MAIN FRAME =====
 local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -200, 0.5, -180)
+local VisiblePos = UDim2.new(0.5, -200, 0.5, -200)
 local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
-Main.Size = UDim2.new(0, 400, 0, 380)
+Main.Size = UDim2.new(0, 400, 0, 420)
 Main.Position = HiddenPos
 Main.BackgroundColor3 = THEME.Black
 Main.Visible = false
@@ -294,7 +293,7 @@ local function AddSlider(parent, text, settingKey, min, max, default, order)
     return frame
 end
 
--- ===== FUNGSI DROPDOWN =====
+-- ===== FUNGSI DROPDOWN (FIX) =====
 local function AddDropdown(parent, text, settingKey, options, default, order)
     local frame = Instance.new("Frame", parent)
     frame.Size = UDim2.new(1, 0, 0, 34)
@@ -332,6 +331,19 @@ local function AddDropdown(parent, text, settingKey, options, default, order)
         local value = options[currentIndex]
         dropdown.Text = value
         Settings[settingKey] = value
+        -- Update posisi name tag
+        for _, char in pairs(workspace:GetChildren()) do
+            local nameTag = char:FindFirstChild("TINZZ_NameTag")
+            if nameTag then
+                if value == "Top" then
+                    nameTag.StudsOffset = Vector3.new(0, 4, 0)
+                elseif value == "Center" then
+                    nameTag.StudsOffset = Vector3.new(0, 0, 0)
+                elseif value == "Bottom" then
+                    nameTag.StudsOffset = Vector3.new(0, -3, 0)
+                end
+            end
+        end
     end)
     
     return frame
@@ -351,7 +363,8 @@ AddToggle(ESPContent, "✦ Tracers (Line)", "Tracers", false, 2)
 AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false, 3)
 AddToggle(ESPContent, "✦ Show Name", "ESPName", true, 4)
 AddToggle(ESPContent, "✦ Show Box", "ESPBox", false, 5)
-AddDropdown(ESPContent, "✦ Name Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 6)
+AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1, 6)
+AddDropdown(ESPContent, "✦ Name Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 7)
 
 -- ===== UPDATE SIZE =====
 task.wait(0.1)
@@ -447,7 +460,7 @@ local function getRainbow()
     return Color3.fromHSV(tick() % 5 / 5, 0.7, 1)
 end
 
--- ===== MAIN LOOP (dari script referensi) =====
+-- ===== MAIN LOOP =====
 RunService.RenderStepped:Connect(function()
     local accent = Settings.RainbowStyle and getRainbow() or THEME.Pink
     
@@ -470,7 +483,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- ===== VISUAL PROCESSING (dari script referensi) =====
+    -- ===== VISUAL PROCESSING =====
     local targets = {}
     for _, p in pairs(Players:GetPlayers()) do 
         if p ~= LocalPlayer and p.Character then 
@@ -479,7 +492,6 @@ RunService.RenderStepped:Connect(function()
     end
     
     for _, char in pairs(targets) do
-        -- Buat cache jika belum ada
         if not visualCache[char] then
             visualCache[char] = {
                 Line = Drawing.new("Line"),
@@ -492,7 +504,7 @@ RunService.RenderStepped:Connect(function()
         local hum = char:FindFirstChild("Humanoid")
         local isAlive = head and hum and hum.Health > 0
         
-        -- ===== TRACERS (Line dari player ke target) =====
+        -- ===== TRACERS =====
         if Settings.Tracers and isAlive then
             local pos, vis = Camera:WorldToViewportPoint(head.Position)
             if vis then
@@ -500,7 +512,7 @@ RunService.RenderStepped:Connect(function()
                 visual.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
                 visual.Line.To = Vector2.new(pos.X, pos.Y)
                 visual.Line.Color = accent
-                visual.Line.Thickness = 1.5
+                visual.Line.Thickness = Settings.ESPLineThickness
             else
                 visual.Line.Visible = false
             end
@@ -508,17 +520,16 @@ RunService.RenderStepped:Connect(function()
             visual.Line.Visible = false
         end
 
-        -- ===== HIGHLIGHT ESP (dari script referensi) =====
+        -- ===== HIGHLIGHT ESP (FIX WARNA) =====
         visual.Highlight.Enabled = Settings.ESP and isAlive
         visual.Highlight.Adornee = char
         visual.Highlight.FillColor = accent
-        visual.Highlight.OutlineColor = Color3.new(1, 1, 1)
-        visual.Highlight.FillTransparency = 0.3
+        visual.Highlight.OutlineColor = accent
+        visual.Highlight.FillTransparency = 0.4
         visual.Highlight.OutlineTransparency = 0.2
         
-        -- ===== NAME TAG (Custom tambahan) =====
+        -- ===== NAME TAG =====
         if Settings.ESPName and isAlive then
-            -- Cari atau buat name tag
             local nameTag = char:FindFirstChild("TINZZ_NameTag")
             if not nameTag then
                 nameTag = Instance.new("BillboardGui")
@@ -549,7 +560,6 @@ RunService.RenderStepped:Connect(function()
                 label.Parent = nameTag
             end
             
-            -- Update label
             local label = nameTag:FindFirstChild("Label")
             if label then
                 label.Text = char.Name .. " [" .. math.floor(hum.Health) .. "HP]"
@@ -557,25 +567,24 @@ RunService.RenderStepped:Connect(function()
             end
             nameTag.Enabled = true
         else
-            -- Hapus name tag jika dimatikan
             local nameTag = char:FindFirstChild("TINZZ_NameTag")
             if nameTag then nameTag:Destroy() end
         end
         
-        -- ===== BOX (Custom tambahan) =====
+        -- ===== BOX =====
         if Settings.ESPBox and isAlive then
             local box = char:FindFirstChild("TINZZ_Box")
             if not box then
                 box = Instance.new("BoxHandleAdornment")
                 box.Name = "TINZZ_Box"
                 box.Size = Vector3.new(3, 5, 1.5)
-                box.Transparency = 0.3
                 box.ZIndex = 0
                 box.AlwaysOnTop = true
                 box.Adornee = char:FindFirstChild("HumanoidRootPart")
                 box.Parent = char
             end
             box.Color3 = accent
+            box.Transparency = 0.4
             box.Visible = true
         else
             local box = char:FindFirstChild("TINZZ_Box")
@@ -589,7 +598,7 @@ local watermark = Instance.new("TextLabel", TixUI)
 watermark.Size = UDim2.new(0, 200, 0, 20)
 watermark.Position = UDim2.new(1, -210, 1, -30)
 watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V6"
+watermark.Text = "✦ TINZZxXITERS ✦ V7"
 watermark.TextColor3 = THEME.Pink
 watermark.TextSize = 12
 watermark.Font = Enum.Font.GothamBold
@@ -605,4 +614,4 @@ local function notify(msg)
 end
 
 notify("✦ System Loaded ✦")
-print("✦ TINZZxXITERS V6 Loaded ✦")
+print("✦ TINZZxXITERS V7 Loaded ✦")
