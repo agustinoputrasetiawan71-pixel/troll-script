@@ -1,6 +1,6 @@
 --[[
-    TINZZxXITERS AIM & ESP V4
-    Fix: Scroll, Layout, Tampilan Rapi
+    TINZZxXITERS AIM & ESP V5
+    Fix: Layout dengan UIListLayout
 ]]
 
 local Players = game:GetService("Players")
@@ -18,20 +18,16 @@ local THEME = {
     Blue = Color3.fromRGB(0, 150, 255),
     White = Color3.fromRGB(255, 255, 255),
     OffText = Color3.fromRGB(160, 160, 160),
-    Glass = Color3.fromRGB(255, 255, 255),
 }
 
 -- ===== SETTINGS =====
 local Settings = {
-    -- AIM Settings
     Sticky = false,
     WallCheck = true,
     TeamCheck = false,
     NPCs = false,
     FOV = 150,
     CircleVis = false,
-    
-    -- ESP Settings
     ESP = false,
     ESPName = true,
     ESPBox = false,
@@ -77,9 +73,9 @@ ToggleBtn.TextSize = 20
 
 -- ===== MAIN FRAME =====
 local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -200, 0.5, -200)
-local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
-Main.Size = UDim2.new(0, 400, 0, 400)
+local VisiblePos = UDim2.new(0.5, -210, 0.5, -220)
+local HiddenPos = UDim2.new(0.5, -210, 1.2, 0)
+Main.Size = UDim2.new(0, 420, 0, 440)
 Main.Position = HiddenPos
 Main.BackgroundColor3 = THEME.Black
 Main.Visible = false
@@ -93,7 +89,7 @@ MainStroke.Color = THEME.Pink
 
 -- ===== TITLE =====
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Size = UDim2.new(1, 0, 0, 38)
 Title.Position = UDim2.new(0, 0, 0, 0)
 Title.Text = "✦ TINZZxXITERS ✦"
 Title.Font = Enum.Font.GothamBold
@@ -102,8 +98,8 @@ Title.BackgroundTransparency = 1
 Title.TextColor3 = THEME.Pink
 
 local SubTitle = Instance.new("TextLabel", Main)
-SubTitle.Size = UDim2.new(1, 0, 0, 18)
-SubTitle.Position = UDim2.new(0, 0, 0, 28)
+SubTitle.Size = UDim2.new(1, 0, 0, 16)
+SubTitle.Position = UDim2.new(0, 0, 0, 26)
 SubTitle.BackgroundTransparency = 1
 SubTitle.Text = "AIM • ESP • VISUAL"
 SubTitle.Font = Enum.Font.Gotham
@@ -113,7 +109,7 @@ SubTitle.TextXAlignment = Enum.TextXAlignment.Center
 
 local CloseBtn = Instance.new("TextButton", Main)
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Position = UDim2.new(1, -35, 0, 4)
 CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "✕"
 CloseBtn.Font = Enum.Font.GothamBold
@@ -122,12 +118,9 @@ CloseBtn.TextSize = 20
 
 -- ===== TAB SYSTEM =====
 local TabFrame = Instance.new("Frame", Main)
-TabFrame.Size = UDim2.new(1, -20, 0, 32)
-TabFrame.Position = UDim2.new(0, 10, 0, 50)
+TabFrame.Size = UDim2.new(1, -20, 0, 30)
+TabFrame.Position = UDim2.new(0, 10, 0, 46)
 TabFrame.BackgroundTransparency = 1
-
-local Tabs = {}
-local CurrentTab = "AIM"
 
 local function CreateTab(name, xPos)
     local btn = Instance.new("TextButton", TabFrame)
@@ -150,11 +143,10 @@ local TabESP = CreateTab("✦ ESP", 0.26)
 -- ===== SCROLL AREA =====
 local Scroll = Instance.new("ScrollingFrame", Main)
 Scroll.Size = UDim2.new(1, -20, 1, -110)
-Scroll.Position = UDim2.new(0, 10, 0, 88)
+Scroll.Position = UDim2.new(0, 10, 0, 82)
 Scroll.BackgroundTransparency = 1
 Scroll.ScrollBarThickness = 3
 Scroll.ScrollBarImageColor3 = THEME.Pink
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 
 -- ===== CONTENT CONTAINERS =====
 local AIMContent = Instance.new("Frame", Scroll)
@@ -167,13 +159,33 @@ ESPContent.Size = UDim2.new(1, 0, 0, 0)
 ESPContent.BackgroundTransparency = 1
 ESPContent.Visible = false
 
+-- ===== UIListLayout untuk AIM =====
+local aimLayout = Instance.new("UIListLayout", AIMContent)
+aimLayout.Padding = UDim.new(0, 4)
+aimLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- ===== UIListLayout untuk ESP =====
+local espLayout = Instance.new("UIListLayout", ESPContent)
+espLayout.Padding = UDim.new(0, 4)
+espLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- ===== FUNGSI UPDATE SIZE =====
+local function updateSize()
+    local aimHeight = aimLayout.AbsoluteContentSize.Y
+    local espHeight = espLayout.AbsoluteContentSize.Y
+    AIMContent.Size = UDim2.new(1, 0, 0, aimHeight + 5)
+    ESPContent.Size = UDim2.new(1, 0, 0, espHeight + 5)
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(aimHeight, espHeight) + 20)
+end
+
 -- ===== FUNGSI TOGGLE =====
-local function AddToggle(parent, text, settingKey, default)
+local function AddToggle(parent, text, settingKey, default, order)
     local btn = Instance.new("TextButton", parent)
     btn.Size = UDim2.new(1, 0, 0, 34)
     btn.BackgroundColor3 = THEME.DarkBlack
     btn.Text = ""
     btn.AutoButtonColor = false
+    btn.LayoutOrder = order
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
     
     local BStroke = Instance.new("UIStroke", btn)
@@ -218,10 +230,11 @@ local function AddToggle(parent, text, settingKey, default)
 end
 
 -- ===== FUNGSI SLIDER =====
-local function AddSlider(parent, text, settingKey, min, max, default)
+local function AddSlider(parent, text, settingKey, min, max, default, order)
     local frame = Instance.new("Frame", parent)
     frame.Size = UDim2.new(1, 0, 0, 45)
     frame.BackgroundTransparency = 1
+    frame.LayoutOrder = order
     
     local label = Instance.new("TextLabel", frame)
     label.Size = UDim2.new(1, 0, 0, 18)
@@ -279,10 +292,11 @@ local function AddSlider(parent, text, settingKey, min, max, default)
 end
 
 -- ===== FUNGSI DROPDOWN =====
-local function AddDropdown(parent, text, settingKey, options, default)
+local function AddDropdown(parent, text, settingKey, options, default, order)
     local frame = Instance.new("Frame", parent)
     frame.Size = UDim2.new(1, 0, 0, 34)
     frame.BackgroundColor3 = THEME.DarkBlack
+    frame.LayoutOrder = order
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 4)
     
     local label = Instance.new("TextLabel", frame)
@@ -322,41 +336,30 @@ local function AddDropdown(parent, text, settingKey, options, default)
 end
 
 -- ===== BUILD AIM TAB =====
-local aimY = 0
-local function addAIM(item)
-    item.Position = UDim2.new(0, 0, 0, aimY)
-    aimY = aimY + 40
-    AIMContent.Size = UDim2.new(1, 0, 0, aimY + 10)
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, aimY + 30)
-end
-
-addAIM(AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false))
-addAIM(AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true))
-addAIM(AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false))
-addAIM(AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false))
-addAIM(AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false))
-addAIM(AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150))
+AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false, 1)
+AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true, 2)
+AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false, 3)
+AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false, 4)
+AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false, 5)
+AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150, 6)
 
 -- ===== BUILD ESP TAB =====
-local espY = 0
-local function addESP(item)
-    item.Position = UDim2.new(0, 0, 0, espY)
-    espY = espY + 40
-    ESPContent.Size = UDim2.new(1, 0, 0, espY + 10)
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, espY + 30)
-end
+AddToggle(ESPContent, "✦ Enable ESP", "ESP", false, 1)
+AddToggle(ESPContent, "✦ Show Name", "ESPName", true, 2)
+AddToggle(ESPContent, "✦ Show Box", "ESPBox", false, 3)
+AddToggle(ESPContent, "✦ Show Line", "ESPLine", false, 4)
+AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false, 5)
+AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1, 6)
+AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 7)
 
-addESP(AddToggle(ESPContent, "✦ Enable ESP", "ESP", false))
-addESP(AddToggle(ESPContent, "✦ Show Name", "ESPName", true))
-addESP(AddToggle(ESPContent, "✦ Show Box", "ESPBox", false))
-addESP(AddToggle(ESPContent, "✦ Show Line", "ESPLine", false))
-addESP(AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false))
-addESP(AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1))
-addESP(AddDropdown(ESPContent, "✦ Line Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top"))
+-- ===== UPDATE SIZE AFTER BUILD =====
+task.wait(0.1)
+updateSize()
+aimLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
+espLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
 
 -- ===== TAB SWITCHING =====
 TabAIM.MouseButton1Click:Connect(function()
-    CurrentTab = "AIM"
     AIMContent.Visible = true
     ESPContent.Visible = false
     TabAIM.BackgroundColor3 = THEME.Pink
@@ -364,10 +367,10 @@ TabAIM.MouseButton1Click:Connect(function()
     TabAIM.TextColor3 = THEME.Black
     TabESP.TextColor3 = THEME.White
     Scroll.CanvasPosition = 0
+    updateSize()
 end)
 
 TabESP.MouseButton1Click:Connect(function()
-    CurrentTab = "ESP"
     AIMContent.Visible = false
     ESPContent.Visible = true
     TabESP.BackgroundColor3 = THEME.Pink
@@ -375,6 +378,7 @@ TabESP.MouseButton1Click:Connect(function()
     TabESP.TextColor3 = THEME.Black
     TabAIM.TextColor3 = THEME.White
     Scroll.CanvasPosition = 0
+    updateSize()
 end)
 
 -- Set default tab
@@ -468,7 +472,6 @@ local function updateESP()
             
             if not humanoid or humanoid.Health <= 0 then continue end
             
-            -- LINE
             if Settings.ESPLine then
                 local line = Instance.new("SelectionBox")
                 line.Color3 = accent
@@ -479,7 +482,6 @@ local function updateESP()
                 table.insert(espObjects, line)
             end
             
-            -- BOX
             if Settings.ESPBox then
                 local box = Instance.new("BoxHandleAdornment")
                 box.Size = Vector3.new(3, 5, 1.5)
@@ -492,7 +494,6 @@ local function updateESP()
                 table.insert(espObjects, box)
             end
             
-            -- NAME
             if Settings.ESPName then
                 local nameTag = Instance.new("BillboardGui")
                 nameTag.Size = UDim2.new(0, 200, 0, 30)
@@ -558,7 +559,7 @@ local watermark = Instance.new("TextLabel", TixUI)
 watermark.Size = UDim2.new(0, 200, 0, 20)
 watermark.Position = UDim2.new(1, -210, 1, -30)
 watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V4"
+watermark.Text = "✦ TINZZxXITERS ✦ V5"
 watermark.TextColor3 = THEME.Pink
 watermark.TextSize = 12
 watermark.Font = Enum.Font.GothamBold
@@ -574,4 +575,4 @@ local function notify(msg)
 end
 
 notify("✦ System Loaded ✦")
-print("✦ TINZZxXITERS V4 Loaded ✦")
+print("✦ TINZZxXITERS V5 Loaded ✦")
