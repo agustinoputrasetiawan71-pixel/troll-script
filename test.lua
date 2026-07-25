@@ -1,474 +1,277 @@
---[[
-    TINZZxXITERS ESP V2
-    Fitur: Name, Line, Box
-    Style: Pink, Black, Blue Modern
-]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- Buat GUI utama
-local player = game.Players.LocalPlayer
-local mouse = player:GetMouse()
-
--- Warna tema
-local THEME = {
-    Pink = Color3.fromRGB(255, 20, 147),
-    DarkPink = Color3.fromRGB(200, 10, 110),
-    Black = Color3.fromRGB(20, 20, 20),
-    DarkBlack = Color3.fromRGB(10, 10, 10),
-    Blue = Color3.fromRGB(0, 150, 255),
-    White = Color3.fromRGB(255, 255, 255),
-    Glass = Color3.fromRGB(255, 255, 255)
+-- Configuration
+local TixSettings = {
+    Sticky = false,
+    WallCheck = true, -- Defaulted to true per your request
+    TeamCheck = false,
+    ESP = false,
+    Tracers = false,
+    RainbowStyle = false,
+    NPCs = false,
+    FOV = 150,
+    CircleVis = false
 }
 
--- Fungsi notifikasi
-local function notify(message)
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "TINZZxXITERS ESP",
-        Text = message,
-        Duration = 3
-    })
+-- THEME COLORS
+local PrimaryRed = Color3.fromRGB(255, 0, 0)
+local DarkGreyBlack = Color3.fromRGB(15, 15, 17) -- "More black than grey"
+local OffText = Color3.fromRGB(160, 160, 160)
+local DarkBtn = Color3.fromRGB(25, 25, 27)
+
+local function getRainbow()
+    return Color3.fromHSV(tick() % 5 / 5, 0.7, 1)
 end
 
--- Buat ScreenGui utama
-local gui = Instance.new("ScreenGui")
-gui.Name = "TINZZ_ESP"
-gui.ResetOnSpawn = false
-gui.Parent = player.PlayerGui
+-- Drawings
+local Circle = Drawing.new("Circle")
+Circle.Visible = false
+Circle.Thickness = 2
+Circle.NumSides = 64
+Circle.Radius = TixSettings.FOV
+Circle.Filled = false
 
--- Frame utama dengan efek glass
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 280, 0, 400)
-mainFrame.Position = UDim2.new(0, 10, 0, 10)
-mainFrame.BackgroundColor3 = THEME.Black
-mainFrame.BackgroundTransparency = 0.15
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = THEME.Pink
-mainFrame.ClipsDescendants = true
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = gui
+local visualCache = {}
 
--- Efek blur/glass (gradient)
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.Black),
-    ColorSequenceKeypoint.new(0.5, THEME.DarkPink),
-    ColorSequenceKeypoint.new(1, THEME.Black)
-})
-gradient.Transparency = NumberSequence.new(0.85)
-gradient.Parent = mainFrame
+-- UI Setup
+local TixUI = Instance.new("ScreenGui")
+TixUI.Name = "EZ_AIM_V1"
+TixUI.Parent = gethui and gethui() or game:GetService("CoreGui")
+TixUI.ResetOnSpawn = false
 
--- Header dengan efek neon
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 40)
-header.Position = UDim2.new(0, 0, 0, 0)
-header.BackgroundColor3 = THEME.DarkPink
-header.BackgroundTransparency = 0.3
-header.BorderSizePixel = 0
-header.Parent = mainFrame
+-- Toggle Icon
+local TogglePanel = Instance.new("Frame", TixUI)
+TogglePanel.Size = UDim2.new(0, 45, 0, 45)
+TogglePanel.Position = UDim2.new(0, 20, 0, 20)
+TogglePanel.BackgroundColor3 = DarkGreyBlack
+TogglePanel.Active = true
+TogglePanel.Draggable = true
+Instance.new("UICorner", TogglePanel)
+local ToggleStroke = Instance.new("UIStroke", TogglePanel)
+ToggleStroke.Thickness = 2
+ToggleStroke.Color = PrimaryRed
 
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 1, 0)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "✦ TINZZxXITERS ✦"
-titleLabel.TextColor3 = THEME.White
-titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextStrokeColor3 = THEME.Pink
-titleLabel.TextStrokeTransparency = 0.3
-titleLabel.Parent = header
+local ToggleBtn = Instance.new("TextButton", TogglePanel)
+ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+ToggleBtn.BackgroundTransparency = 1
+ToggleBtn.Text = "EZ"
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextColor3 = PrimaryRed
+ToggleBtn.TextSize = 18
 
--- Subtitle
-local subTitle = Instance.new("TextLabel")
-subTitle.Size = UDim2.new(1, 0, 0, 20)
-subTitle.Position = UDim2.new(0, 0, 1, -20)
-subTitle.BackgroundTransparency = 1
-subTitle.Text = "✦ ESP SYSTEM ✦"
-subTitle.TextColor3 = THEME.Pink
-subTitle.TextSize = 12
-subTitle.Font = Enum.Font.Gotham
-subTitle.TextXAlignment = Enum.TextXAlignment.Center
-subTitle.Parent = header
+-- MAIN FRAME
+local Main = Instance.new("Frame", TixUI)
+local VisiblePos = UDim2.new(0.5, -180, 0.5, -140)
+local HiddenPos = UDim2.new(0.5, -180, 1.2, 0)
+Main.Size = UDim2.new(0, 360, 0, 280) 
+Main.Position = HiddenPos
+Main.BackgroundColor3 = DarkGreyBlack
+Main.Visible = false
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
--- Scroll Frame untuk konten
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -10, 1, -50)
-scrollFrame.Position = UDim2.new(0, 5, 0, 45)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.ScrollBarThickness = 3
-scrollFrame.ScrollBarImageColor3 = THEME.Pink
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
-scrollFrame.Parent = mainFrame
+local MainStroke = Instance.new("UIStroke", Main)
+MainStroke.Thickness = 2
+MainStroke.Color = PrimaryRed
 
-local contentY = 0
-local function addSpacing(amount)
-    contentY = contentY + amount
+-- TITLE
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Text = "EZ AIM"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 24
+Title.BackgroundTransparency = 1
+Title.TextColor3 = PrimaryRed
+
+local CloseBtn = Instance.new("TextButton", Main)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 10)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "Ã—"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = PrimaryRed
+CloseBtn.TextSize = 25
+
+-- OPEN/CLOSE LOGIC
+ToggleBtn.MouseButton1Click:Connect(function()
+    Main.Visible = true
+    TogglePanel.Visible = false
+    Main:TweenPosition(VisiblePos, "Out", "Quart", 0.5, true)
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    Main:TweenPosition(HiddenPos, "In", "Quart", 0.4, true, function()
+        Main.Visible = false
+        TogglePanel.Visible = true
+    end)
+end)
+
+-- SCROLL AREA
+local Scroll = Instance.new("ScrollingFrame", Main)
+Scroll.Size = UDim2.new(1, -20, 1, -70)
+Scroll.Position = UDim2.new(0, 10, 0, 60)
+Scroll.BackgroundTransparency = 1
+Scroll.CanvasSize = UDim2.new(0, 0, 2.2, 0)
+Scroll.ScrollBarThickness = 2
+Scroll.ScrollBarImageColor3 = PrimaryRed
+
+local UIList = Instance.new("UIListLayout", Scroll)
+UIList.Padding = UDim.new(0, 6)
+
+local function AddToggle(text, settingKey)
+    local btn = Instance.new("TextButton", Scroll)
+    btn.Size = UDim2.new(1, -5, 0, 42)
+    btn.BackgroundColor3 = DarkBtn
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    Instance.new("UICorner", btn)
+    
+    local BStroke = Instance.new("UIStroke", btn)
+    BStroke.Thickness = 1
+    BStroke.Color = PrimaryRed
+    BStroke.Transparency = 0.8 -- Subtle border for buttons
+
+    local Label = Instance.new("TextLabel", btn)
+    Label.Size = UDim2.new(1, -60, 1, 0)
+    Label.Position = UDim2.new(0, 15, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.Font = Enum.Font.GothamBold
+    Label.TextColor3 = PrimaryRed -- All text red per request
+    Label.TextSize = 14
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local Status = Instance.new("TextLabel", btn)
+    Status.Size = UDim2.new(0, 40, 1, 0)
+    Status.Position = UDim2.new(1, -55, 0, 0)
+    Status.BackgroundTransparency = 1
+    Status.Text = "OFF"
+    Status.Font = Enum.Font.GothamBold
+    Status.TextColor3 = OffText
+    Status.TextSize = 13
+    Status.TextXAlignment = Enum.TextXAlignment.Right
+
+    btn.MouseButton1Click:Connect(function()
+        TixSettings[settingKey] = not TixSettings[settingKey]
+        local s = TixSettings[settingKey]
+        
+        local targetColor = s and Color3.fromRGB(45, 10, 10) or DarkBtn
+        TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
+        
+        Status.Text = s and "ON" or "OFF"
+        Status.TextColor3 = s and PrimaryRed or OffText
+        if settingKey == "CircleVis" then Circle.Visible = s end
+    end)
+    return {Label = Label, Status = Status, Active = function() return TixSettings[settingKey] end}
 end
 
--- Fungsi untuk membuat toggle modern
-local function createToggle(parent, yPos, text, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 35)
-    frame.Position = UDim2.new(0, 5, 0, yPos)
-    frame.BackgroundColor3 = THEME.DarkBlack
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = THEME.Pink
-    frame.Parent = parent
+local indicators = {
+    Sticky = AddToggle("Sticky Aim", "Sticky"),
+    Walls = AddToggle("Wall Check", "WallCheck"),
+    Teams = AddToggle("Team Check", "TeamCheck"),
+    ESP = AddToggle("Visual ESP", "ESP"),
+    Tracers = AddToggle("Tracers", "Tracers"),
+    NPCs = AddToggle("Include NPCs", "NPCs"),
+    Rain = AddToggle("Rainbow Mode", "RainbowStyle"),
+    FOV = AddToggle("Show FOV", "CircleVis")
+}
+
+-- Wall Check Implementation
+local function isVisible(targetPart)
+    if not TixSettings.WallCheck then return true end
+    local castPoints = {targetPart.Position}
+    local ignoreList = {LocalPlayer.Character, Camera}
+    local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 1000)
+    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
     
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 160, 1, 0)
-    label.Position = UDim2.new(0, 5, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = THEME.White
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Font = Enum.Font.Gotham
-    label.Parent = frame
-    
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0, 50, 1, -4)
-    toggle.Position = UDim2.new(1, -55, 0, 2)
-    toggle.BackgroundColor3 = default and THEME.Pink or THEME.DarkBlack
-    toggle.BorderSizePixel = 1
-    toggle.BorderColor3 = THEME.Blue
-    toggle.Text = default and "ON" or "OFF"
-    toggle.TextColor3 = THEME.White
-    toggle.TextSize = 12
-    toggle.Font = Enum.Font.GothamBold
-    toggle.Parent = frame
-    
-    local state = default
-    toggle.MouseButton1Click:Connect(function()
-        state = not state
-        toggle.BackgroundColor3 = state and THEME.Pink or THEME.DarkBlack
-        toggle.Text = state and "ON" or "OFF"
-        callback(state)
-    end)
-    
-    return function() return state end
+    if hit and hit:IsDescendantOf(targetPart.Parent) then
+        return true
+    end
+    return false
 end
 
--- Fungsi untuk membuat color picker modern
-local function createColorPicker(parent, yPos, text, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 35)
-    frame.Position = UDim2.new(0, 5, 0, yPos)
-    frame.BackgroundColor3 = THEME.DarkBlack
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = THEME.Pink
-    frame.Parent = parent
+-- Targeting Logic
+local function getClosest()
+    local target, shortestFOV = nil, TixSettings.FOV
+    local potentials = {}
     
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0, 160, 1, 0)
-    label.Position = UDim2.new(0, 5, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = THEME.White
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Font = Enum.Font.Gotham
-    label.Parent = frame
-    
-    local colorBtn = Instance.new("TextButton")
-    colorBtn.Size = UDim2.new(0, 50, 1, -4)
-    colorBtn.Position = UDim2.new(1, -55, 0, 2)
-    colorBtn.BackgroundColor3 = default
-    colorBtn.BorderSizePixel = 1
-    colorBtn.BorderColor3 = THEME.Blue
-    colorBtn.Text = ""
-    colorBtn.Parent = frame
-    
-    local colorValue = default
-    local colorIndex = 1
-    local colors = {
-        Color3.fromRGB(255, 20, 147),  -- Pink
-        Color3.fromRGB(0, 150, 255),   -- Blue
-        Color3.fromRGB(255, 0, 0),     -- Red
-        Color3.fromRGB(0, 255, 0),     -- Green
-        Color3.fromRGB(255, 255, 0),   -- Yellow
-        Color3.fromRGB(255, 0, 255),   -- Magenta
-        Color3.fromRGB(0, 255, 255),   -- Cyan
-        Color3.fromRGB(255, 255, 255)  -- White
-    }
-    
-    colorBtn.MouseButton1Click:Connect(function()
-        colorIndex = colorIndex % #colors + 1
-        colorValue = colors[colorIndex]
-        colorBtn.BackgroundColor3 = colorValue
-        callback(colorValue)
-    end)
-    
-    return function() return colorValue end
-end
-
--- Fungsi untuk membuat slider modern
-local function createSlider(parent, yPos, text, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -10, 0, 45)
-    frame.Position = UDim2.new(0, 5, 0, yPos)
-    frame.BackgroundColor3 = THEME.DarkBlack
-    frame.BackgroundTransparency = 0.5
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = THEME.Pink
-    frame.Parent = parent
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.Position = UDim2.new(0, 5, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text .. ": " .. tostring(default)
-    label.TextColor3 = THEME.White
-    label.TextSize = 13
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Font = Enum.Font.Gotham
-    label.Parent = frame
-    
-    local slider = Instance.new("Frame")
-    slider.Size = UDim2.new(1, -10, 0, 6)
-    slider.Position = UDim2.new(0, 5, 0, 28)
-    slider.BackgroundColor3 = THEME.DarkBlack
-    slider.BorderSizePixel = 1
-    slider.BorderColor3 = THEME.Blue
-    slider.Parent = frame
-    
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = THEME.Pink
-    fill.BorderSizePixel = 0
-    fill.Parent = slider
-    
-    local drag = Instance.new("TextButton")
-    drag.Size = UDim2.new(0, 16, 0, 16)
-    drag.Position = UDim2.new((default - min) / (max - min), -8, 0, -5)
-    drag.BackgroundColor3 = THEME.White
-    drag.BorderSizePixel = 2
-    drag.BorderColor3 = THEME.Pink
-    drag.Text = ""
-    drag.Parent = slider
-    
-    local value = default
-    local dragging = false
-    
-    drag.MouseButton1Down:Connect(function()
-        dragging = true
-    end)
-    
-    game:GetService("UserInputService").InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    mouse.Move:Connect(function()
-        if not dragging then return end
-        local pos = math.clamp((mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
-        value = min + (max - min) * pos
-        value = math.round(value)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        drag.Position = UDim2.new(pos, -8, 0, -5)
-        label.Text = text .. ": " .. tostring(value)
-        callback(value)
-    end)
-    
-    return function() return value end
-end
-
--- ===== VARIABEL ESP =====
-local espEnabled = false
-local showName = true
-local showBox = true
-local showLine = true
-local boxColor = THEME.Pink
-local lineColor = THEME.Blue
-local nameColor = THEME.White
-local lineThickness = 2
-local espObjects = {}
-
--- ===== FUNGSI ESP =====
-local function clearESP()
-    for _, v in pairs(espObjects) do
-        if v and v.Parent then
-            v:Destroy()
+    for _,v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            if TixSettings.TeamCheck and v.Team == LocalPlayer.Team then continue end
+            table.insert(potentials, v.Character.Head)
         end
     end
-    espObjects = {}
-end
-
-local function updateESP()
-    clearESP()
-    if not espEnabled then return end
     
-    for _, target in pairs(game.Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = target.Character.HumanoidRootPart
-            local humanoid = target.Character:FindFirstChild("Humanoid")
-            
-            if not humanoid or humanoid.Health <= 0 then continue end
-            
-            -- BOX
-            if showBox then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Size = Vector3.new(3, 5, 1.5)
-                box.Color3 = boxColor
-                box.Transparency = 0.3
-                box.ZIndex = 0
-                box.AlwaysOnTop = true
-                box.Adornee = rootPart
-                box.Parent = rootPart
-                table.insert(espObjects, box)
-            end
-            
-            -- LINE (Fixed)
-            if showLine then
-                local line = Instance.new("SelectionBox")
-                line.Color3 = lineColor
-                line.Transparency = 0.5
-                line.LineThickness = lineThickness
-                line.Adornee = rootPart
-                line.Parent = rootPart
-                table.insert(espObjects, line)
-            end
-            
-            -- NAME
-            if showName then
-                local nameTag = Instance.new("BillboardGui")
-                nameTag.Size = UDim2.new(0, 200, 0, 30)
-                nameTag.StudsOffset = Vector3.new(0, 4, 0)
-                nameTag.AlwaysOnTop = true
-                nameTag.Parent = rootPart
-                
-                local label = Instance.new("TextLabel")
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.Text = target.Name .. " [" .. math.floor(humanoid.Health) .. "HP]"
-                label.TextColor3 = nameColor
-                label.TextSize = 14
-                label.TextStrokeTransparency = 0.2
-                label.TextStrokeColor3 = THEME.Black
-                label.Font = Enum.Font.GothamBold
-                label.Parent = nameTag
-                table.insert(espObjects, nameTag)
+    if TixSettings.NPCs then
+        for _,v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Head") and v.Humanoid.Health > 0 then
+                if not Players:GetPlayerFromCharacter(v) then table.insert(potentials, v.Head) end
             end
         end
     end
+
+    for _, head in pairs(potentials) do
+        local pos, vis = Camera:WorldToViewportPoint(head.Position)
+        if vis and isVisible(head) then
+            local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+            if mag < shortestFOV then 
+                target = head 
+                shortestFOV = mag 
+            end
+        end
+    end
+    return target
 end
 
--- ===== UI CONTROLS =====
-local yPos = 5
+-- Main Loop
+RunService.RenderStepped:Connect(function()
+    local accent = TixSettings.RainbowStyle and getRainbow() or PrimaryRed
+    
+    Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    Circle.Color = accent
+    MainStroke.Color = accent
+    ToggleStroke.Color = accent
+    Title.TextColor3 = accent
 
--- Enable ESP
-local espToggle = createToggle(scrollFrame, yPos, "✦ Enable ESP", false, function(state)
-    espEnabled = state
-    if state then
-        updateESP()
-        notify("✦ ESP Activated ✦")
-    else
-        clearESP()
-        notify("ESP Deactivated")
+    if TixSettings.Sticky then
+        local lock = getClosest()
+        if lock then 
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, lock.Position) 
+        end
+    end
+
+    -- Visual Processing (ESP/Tracers)
+    local targets = {}
+    for _, p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character then table.insert(targets, p.Character) end end
+    
+    for _, char in pairs(targets) do
+        if not visualCache[char] then
+            visualCache[char] = {Line = Drawing.new("Line"), High = Instance.new("Highlight", TixUI)}
+        end
+        local visual = visualCache[char]
+        local head = char:FindFirstChild("Head")
+        local hum = char:FindFirstChild("Humanoid")
+        local isAlive = head and hum and hum.Health > 0
+        
+        if TixSettings.Tracers and isAlive then
+            local pos, vis = Camera:WorldToViewportPoint(head.Position)
+            if vis then
+                visual.Line.Visible = true
+                visual.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                visual.Line.To = Vector2.new(pos.X, pos.Y)
+                visual.Line.Color = accent
+                visual.Line.Thickness = 1.5
+            else visual.Line.Visible = false end
+        else visual.Line.Visible = false end
+
+        visual.High.Enabled = TixSettings.ESP and isAlive
+        visual.High.Adornee = char
+        visual.High.FillColor = accent
+        visual.High.OutlineColor = Color3.new(1,1,1)
     end
 end)
-addSpacing(40)
-
--- Show Name
-local nameToggle = createToggle(scrollFrame, yPos + 40, "✦ Show Name", true, function(state)
-    showName = state
-    if espEnabled then updateESP() end
-end)
-addSpacing(40)
-
--- Show Box
-local boxToggle = createToggle(scrollFrame, yPos + 80, "✦ Show Box", true, function(state)
-    showBox = state
-    if espEnabled then updateESP() end
-end)
-addSpacing(40)
-
--- Show Line
-local lineToggle = createToggle(scrollFrame, yPos + 120, "✦ Show Line", true, function(state)
-    showLine = state
-    if espEnabled then updateESP() end
-end)
-addSpacing(45)
-
--- Color Pickers
-local boxColorPicker = createColorPicker(scrollFrame, yPos + 165, "✦ Box Color", THEME.Pink, function(color)
-    boxColor = color
-    if espEnabled then updateESP() end
-end)
-addSpacing(40)
-
-local lineColorPicker = createColorPicker(scrollFrame, yPos + 205, "✦ Line Color", THEME.Blue, function(color)
-    lineColor = color
-    if espEnabled then updateESP() end
-end)
-addSpacing(40)
-
-local nameColorPicker = createColorPicker(scrollFrame, yPos + 245, "✦ Name Color", THEME.White, function(color)
-    nameColor = color
-    if espEnabled then updateESP() end
-end)
-addSpacing(45)
-
--- Line Thickness
-local thicknessSlider = createSlider(scrollFrame, yPos + 290, "✦ Line Thickness", 1, 5, 2, function(value)
-    lineThickness = value
-    if espEnabled then updateESP() end
-end)
-addSpacing(50)
-
--- Tombol Refresh
-local refreshBtn = Instance.new("TextButton")
-refreshBtn.Size = UDim2.new(0.8, 0, 0, 35)
-refreshBtn.Position = UDim2.new(0.1, 0, 1, -45)
-refreshBtn.BackgroundColor3 = THEME.Pink
-refreshBtn.BackgroundTransparency = 0.2
-refreshBtn.BorderSizePixel = 2
-refreshBtn.BorderColor3 = THEME.Blue
-refreshBtn.Text = "✦ REFRESH ESP ✦"
-refreshBtn.TextColor3 = THEME.White
-refreshBtn.TextScaled = true
-refreshBtn.Font = Enum.Font.GothamBold
-refreshBtn.Parent = mainFrame
-
-refreshBtn.MouseButton1Click:Connect(function()
-    if espEnabled then
-        updateESP()
-        notify("✦ ESP Refreshed ✦")
-    else
-        notify("Enable ESP first!")
-    end
-end)
-
--- Auto refresh
-game:GetService("RunService").RenderStepped:Connect(function()
-    if espEnabled then
-        updateESP()
-    end
-end)
-
--- Deteksi pemain
-game.Players.PlayerAdded:Connect(function()
-    if espEnabled then updateESP() end
-end)
-
-game.Players.PlayerRemoving:Connect(function()
-    if espEnabled then updateESP() end
-end)
-
--- ===== WATERMARK =====
-local watermark = Instance.new("TextLabel")
-watermark.Size = UDim2.new(0, 200, 0, 20)
-watermark.Position = UDim2.new(1, -210, 1, -25)
-watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ v2"
-watermark.TextColor3 = THEME.Pink
-watermark.TextSize = 12
-watermark.Font = Enum.Font.GothamBold
-watermark.TextXAlignment = Enum.TextXAlignment.Right
-watermark.Parent = gui
-
-notify("✦ TINZZxXITERS ESP Loaded ✦")
-print("✦ TINZZxXITERS ESP V2 Loaded ✦")
