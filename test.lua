@@ -1,25 +1,21 @@
--- LocalScript â†’ StarterPlayerScripts
--- Owner ESP + Aim Assist | Rayfield UI
+--[[
+    TINZZxXITERS ESP + AIM ASSIST V8
+    Source: Owner ESP + Aim Assist
+    Fitur: ESP (Box, Tracer, Name, Health, Distance), Aim Assist, FOV Circle
+]]
 
-local Players      = game:GetService("Players")
-local RunService   = game:GetService("RunService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Camera       = workspace.CurrentCamera
+local Camera = workspace.CurrentCamera
 
-local LocalPlayer  = Players.LocalPlayer
-local PlayerGui    = LocalPlayer:WaitForChild("PlayerGui")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
--- â”‚  YOUR ROBLOX USER ID HERE            â”‚
--- â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-local OWNER_ID = 0 -- e.g. 12345678
-
-if LocalPlayer.UserId ~= OWNER_ID then return end
-
--- â”€â”€â”€ Load Rayfield â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Load Rayfield ────────────────────────────────────────────────────────────
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
--- â”€â”€â”€ Global Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Global Settings ─────────────────────────────────────────────────────────
 local S = {
     -- ESP
     HighlightOn  = false,
@@ -29,47 +25,52 @@ local S = {
     NameOn       = true,
     DistanceOn   = true,
     TeamCheck    = false,
-    EnemyColor   = Color3.fromRGB(255, 60,  60),
-    TeamColor    = Color3.fromRGB(60,  200, 255),
+    EnemyColor   = Color3.fromRGB(255, 20, 147), -- Pink
+    TeamColor    = Color3.fromRGB(0, 150, 255),  -- Blue
     BoxThickness = 2,
     TracerOrigin = "Bottom",
     FillAlpha    = 0.6,
     MaxDist      = 0,
 
     -- Aim Assist
-    AimAssistOn      = false,
-    AimStrength      = 0.08,  -- 0.01 (gentle) â†’ 0.3 (strong)
-    AimFOV           = 150,   -- radius in pixels to look for targets
-    AimBone          = "Head", -- "Head" | "HumanoidRootPart" | "UpperTorso"
-    AimTeamCheck     = true,  -- never aim at teammates
-    ShowFOVCircle    = true,
-    FOVColor         = Color3.fromRGB(255, 255, 255),
+    AimAssistOn   = false,
+    AimStrength   = 0.08,
+    AimFOV        = 150,
+    AimBone       = "Head",
+    AimTeamCheck  = true,
+    ShowFOVCircle = true,
+    FOVColor      = Color3.fromRGB(255, 20, 147), -- Pink
 }
 
--- â”€â”€â”€ Color palettes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Color palettes ───────────────────────────────────────────────────────────
 local ENEMY_PALETTE = {
-    Red    = Color3.fromRGB(255, 60,  60),
-    Orange = Color3.fromRGB(255, 140, 30),
-    Yellow = Color3.fromRGB(255, 220, 50),
-    Purple = Color3.fromRGB(180, 50,  255),
-    White  = Color3.fromRGB(255, 255, 255),
-}
-local TEAM_PALETTE = {
-    Blue  = Color3.fromRGB(60,  150, 255),
-    Green = Color3.fromRGB(60,  255, 100),
-    Cyan  = Color3.fromRGB(0,   255, 220),
-    White = Color3.fromRGB(255, 255, 255),
+    Pink    = Color3.fromRGB(255, 20, 147),
+    Red     = Color3.fromRGB(255, 60, 60),
+    Orange  = Color3.fromRGB(255, 140, 30),
+    Yellow  = Color3.fromRGB(255, 220, 50),
+    Purple  = Color3.fromRGB(180, 50, 255),
+    White   = Color3.fromRGB(255, 255, 255),
+    Cyan    = Color3.fromRGB(0, 255, 220),
+    Green   = Color3.fromRGB(60, 255, 100),
 }
 
--- â”€â”€â”€ ScreenGui â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local TEAM_PALETTE = {
+    Blue  = Color3.fromRGB(60, 150, 255),
+    Green = Color3.fromRGB(60, 255, 100),
+    Cyan  = Color3.fromRGB(0, 255, 220),
+    White = Color3.fromRGB(255, 255, 255),
+    Pink  = Color3.fromRGB(255, 20, 147),
+}
+
+-- ─── ScreenGui ───────────────────────────────────────────────────────────────
 local ESPGui = Instance.new("ScreenGui")
-ESPGui.Name           = "OwnerESP"
+ESPGui.Name           = "TINZZ_ESP"
 ESPGui.ResetOnSpawn   = false
 ESPGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ESPGui.IgnoreGuiInset = true
 ESPGui.Parent         = PlayerGui
 
--- â”€â”€â”€ Frame pool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Frame pool ──────────────────────────────────────────────────────────────
 local pool    = {}
 local poolIdx = 0
 
@@ -92,7 +93,7 @@ local function flushPool()
     poolIdx = 0
 end
 
--- â”€â”€â”€ Draw primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Draw primitives ─────────────────────────────────────────────────────────
 
 local function drawRect(x, y, w, h, color, t)
     t = t or S.BoxThickness
@@ -105,8 +106,8 @@ local function drawRect(x, y, w, h, color, t)
     end
     bar(x - t/2,     y,         w + t, t)   -- top
     bar(x - t/2,     y + h,     w + t, t)   -- bottom
-    bar(x,           y,         t,     h)    -- left
-    bar(x + w,       y,         t,     h)    -- right
+    bar(x,           y,         t,     h)   -- left
+    bar(x + w,       y,         t,     h)   -- right
 end
 
 local function drawLine(a, b, color, thickness)
@@ -167,7 +168,7 @@ local function drawCircle(cx, cy, radius, color)
     end
 end
 
--- â”€â”€â”€ Highlight pool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Highlight pool ──────────────────────────────────────────────────────────
 local highlights = {}
 
 local function ensureHL(player)
@@ -186,7 +187,7 @@ Players.PlayerRemoving:Connect(function(p)
     if highlights[p] then highlights[p]:Destroy(); highlights[p] = nil end
 end)
 
--- â”€â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Utility ─────────────────────────────────────────────────────────────────
 local whitelisted = {}
 
 local function shouldSkip(p)
@@ -227,10 +228,7 @@ local function getCharBox(char)
     return mnX, mnY, mxX - mnX, mxY - mnY
 end
 
--- â”€â”€â”€ Aim Assist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
--- Finds the closest valid target within the FOV circle and gently nudges
--- the camera CFrame toward their aim bone each frame.
--- Strength slider controls the lerp alpha (how quickly it pulls).
+-- ─── Aim Assist ──────────────────────────────────────────────────────────────
 
 local function getAimTarget()
     local vp      = Camera.ViewportSize
@@ -268,7 +266,7 @@ local function getAimTarget()
     return bestTarget
 end
 
--- â”€â”€â”€ Render loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Render loop ─────────────────────────────────────────────────────────────
 local myRoot = nil
 LocalPlayer.CharacterAdded:Connect(function(c)
     myRoot = c:WaitForChild("HumanoidRootPart")
@@ -280,7 +278,7 @@ end
 RunService.RenderStepped:Connect(function()
     poolIdx = 0
 
-    -- â”€â”€ Aim Assist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    -- ── Aim Assist ─────────────────────────────────────────────────────────
     if S.AimAssistOn then
         local target = getAimTarget()
         if target then
@@ -289,13 +287,13 @@ RunService.RenderStepped:Connect(function()
         end
     end
 
-    -- â”€â”€ FOV Circle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    -- ── FOV Circle ────────────────────────────────────────────────────────
     if S.ShowFOVCircle and S.AimAssistOn then
         local vp = Camera.ViewportSize
         drawCircle(vp.X/2, vp.Y/2, S.AimFOV, S.FOVColor)
     end
 
-    -- â”€â”€ Per-player ESP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    -- ── Per-player ESP ────────────────────────────────────────────────────
     for _, player in ipairs(Players:GetPlayers()) do
         if player == LocalPlayer then continue end
 
@@ -364,46 +362,83 @@ RunService.RenderStepped:Connect(function()
     flushPool()
 end)
 
--- â”€â”€â”€ Rayfield UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- ─── Rayfield UI ─────────────────────────────────────────────────────────────
 local Window = Rayfield:CreateWindow({
-    Name            = "Owner ESP",
-    LoadingTitle    = "ESP Panel",
-    LoadingSubtitle = "Owner Only",
+    Name            = "✦ TINZZxXITERS ✦",
+    LoadingTitle    = "TINZZxXITERS",
+    LoadingSubtitle = "ESP + AIM ASSIST",
     ConfigurationSaving = { Enabled = false },
     Discord         = { Enabled = false },
     KeySystem       = false,
 })
 
--- â•â• TAB 1 Â· Features â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-local FeatTab = Window:CreateTab("Features", 4483362458)
+-- ══ TAB 1 · ESP ════════════════════════════════════════════════════════════
+local ESPTab = Window:CreateTab("✦ ESP", 4483362458)
 
-FeatTab:CreateSection("Visuals")
-FeatTab:CreateToggle({ Name = "Box ESP",        CurrentValue = true,  Flag = "BoxOn",
-    Callback = function(v) S.BoxOn       = v end })
-FeatTab:CreateToggle({ Name = "Highlight",      CurrentValue = false, Flag = "HLOn",
-    Callback = function(v) S.HighlightOn = v end })
-FeatTab:CreateToggle({ Name = "Tracers",        CurrentValue = true,  Flag = "TracOn",
-    Callback = function(v) S.TracerOn    = v end })
-FeatTab:CreateToggle({ Name = "Health Bar",     CurrentValue = true,  Flag = "HPOn",
-    Callback = function(v) S.HealthBarOn = v end })
-FeatTab:CreateToggle({ Name = "Name Tag",       CurrentValue = true,  Flag = "NameOn",
-    Callback = function(v) S.NameOn      = v end })
-FeatTab:CreateToggle({ Name = "Distance Label", CurrentValue = true,  Flag = "DistOn",
-    Callback = function(v) S.DistanceOn  = v end })
+ESPTab:CreateSection("Visuals")
 
-FeatTab:CreateSection("Team")
-FeatTab:CreateToggle({ Name = "Team Check (hide allies)", CurrentValue = false, Flag = "TmChk",
-    Callback = function(v) S.TeamCheck = v end })
+ESPTab:CreateToggle({
+    Name = "Box ESP",
+    CurrentValue = true,
+    Flag = "BoxOn",
+    Callback = function(v) S.BoxOn = v end
+})
 
-FeatTab:CreateSection("Performance")
-FeatTab:CreateSlider({
+ESPTab:CreateToggle({
+    Name = "Highlight",
+    CurrentValue = false,
+    Flag = "HLOn",
+    Callback = function(v) S.HighlightOn = v end
+})
+
+ESPTab:CreateToggle({
+    Name = "Tracers",
+    CurrentValue = true,
+    Flag = "TracOn",
+    Callback = function(v) S.TracerOn = v end
+})
+
+ESPTab:CreateToggle({
+    Name = "Health Bar",
+    CurrentValue = true,
+    Flag = "HPOn",
+    Callback = function(v) S.HealthBarOn = v end
+})
+
+ESPTab:CreateToggle({
+    Name = "Name Tag",
+    CurrentValue = true,
+    Flag = "NameOn",
+    Callback = function(v) S.NameOn = v end
+})
+
+ESPTab:CreateToggle({
+    Name = "Distance Label",
+    CurrentValue = true,
+    Flag = "DistOn",
+    Callback = function(v) S.DistanceOn = v end
+})
+
+ESPTab:CreateSection("Team")
+ESPTab:CreateToggle({
+    Name = "Team Check (hide allies)",
+    CurrentValue = false,
+    Flag = "TmChk",
+    Callback = function(v) S.TeamCheck = v end
+})
+
+ESPTab:CreateSection("Performance")
+ESPTab:CreateSlider({
     Name = "Max Render Distance (0 = unlimited)",
-    Range = {0, 1000}, Increment = 50, CurrentValue = 0, Flag = "MaxDist",
+    Range = {0, 1000},
+    Increment = 50,
+    CurrentValue = 0,
+    Flag = "MaxDist",
     Callback = function(v) S.MaxDist = v end,
 })
 
--- â•â• TAB 2 Â· Aim Assist â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-local AimTab = Window:CreateTab("Aim Assist", 4483362458)
+-- ══ TAB 2 · Aim Assist ══════════════════════════════════════════════════════
+local AimTab = Window:CreateTab("✦ AIM", 4483362458)
 
 AimTab:CreateSection("Toggle")
 
@@ -411,18 +446,14 @@ AimTab:CreateToggle({
     Name = "Enable Aim Assist",
     CurrentValue = false,
     Flag = "AimOn",
-    Callback = function(v)
-        S.AimAssistOn = v
-    end,
+    Callback = function(v) S.AimAssistOn = v end,
 })
 
 AimTab:CreateToggle({
     Name = "Show FOV Circle",
     CurrentValue = true,
     Flag = "ShowFOV",
-    Callback = function(v)
-        S.ShowFOVCircle = v
-    end,
+    Callback = function(v) S.ShowFOVCircle = v end,
 })
 
 AimTab:CreateSection("Strength")
@@ -431,11 +462,9 @@ AimTab:CreateSlider({
     Name = "Aim Strength",
     Range = {1, 30},
     Increment = 1,
-    CurrentValue = 8,  -- maps to 0.08
+    CurrentValue = 8,
     Flag = "AimStr",
-    Callback = function(v)
-        S.AimStrength = v / 100  -- 1â†’0.01 (barely noticeable), 30â†’0.30 (very strong)
-    end,
+    Callback = function(v) S.AimStrength = v / 100 end,
 })
 
 AimTab:CreateSection("Field of View")
@@ -446,9 +475,7 @@ AimTab:CreateSlider({
     Increment = 10,
     CurrentValue = 150,
     Flag = "AimFOV",
-    Callback = function(v)
-        S.AimFOV = v
-    end,
+    Callback = function(v) S.AimFOV = v end,
 })
 
 AimTab:CreateSection("Target Bone")
@@ -458,9 +485,7 @@ AimTab:CreateDropdown({
     Options = {"Head", "UpperTorso", "HumanoidRootPart"},
     CurrentOption = "Head",
     Flag = "AimBone",
-    Callback = function(v)
-        S.AimBone = v
-    end,
+    Callback = function(v) S.AimBone = v end,
 })
 
 AimTab:CreateSection("Safety")
@@ -469,60 +494,83 @@ AimTab:CreateToggle({
     Name = "Never Aim at Teammates",
     CurrentValue = true,
     Flag = "AimTeamChk",
-    Callback = function(v)
-        S.AimTeamCheck = v
-    end,
+    Callback = function(v) S.AimTeamCheck = v end,
 })
 
--- â•â• TAB 3 Â· Style â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-local StyleTab = Window:CreateTab("Style", 4483362458)
+-- ══ TAB 3 · Style ════════════════════════════════════════════════════════════
+local StyleTab = Window:CreateTab("✦ STYLE", 4483362458)
 
 StyleTab:CreateSection("Box")
 StyleTab:CreateSlider({
-    Name = "Box Thickness", Range = {1, 5}, Increment = 1, CurrentValue = 2, Flag = "BoxThk",
+    Name = "Box Thickness",
+    Range = {1, 5},
+    Increment = 1,
+    CurrentValue = 2,
+    Flag = "BoxThk",
     Callback = function(v) S.BoxThickness = v end,
 })
 
 StyleTab:CreateSection("Tracer")
 StyleTab:CreateDropdown({
-    Name = "Tracer Origin", Options = {"Bottom","Center","Top"},
-    CurrentOption = "Bottom", Flag = "TrOrigin",
+    Name = "Tracer Origin",
+    Options = {"Bottom", "Center", "Top"},
+    CurrentOption = "Bottom",
+    Flag = "TrOrigin",
     Callback = function(v) S.TracerOrigin = v end,
 })
 
 StyleTab:CreateSection("Highlight")
 StyleTab:CreateSlider({
     Name = "Fill Transparency (0=solid 10=hidden)",
-    Range = {0,10}, Increment = 1, CurrentValue = 6, Flag = "FillAlpha",
+    Range = {0, 10},
+    Increment = 1,
+    CurrentValue = 6,
+    Flag = "FillAlpha",
     Callback = function(v) S.FillAlpha = v / 10 end,
 })
 
--- â•â• TAB 4 Â· Colors â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-local ColTab = Window:CreateTab("Colors", 4483362458)
+-- ══ TAB 4 · Colors ════════════════════════════════════════════════════════════
+local ColTab = Window:CreateTab("✦ COLORS", 4483362458)
 
 ColTab:CreateSection("Enemy Color")
 ColTab:CreateDropdown({
-    Name = "Enemy Color", Flag = "EnemyCol",
-    Options = {"Red","Orange","Yellow","Purple","White"}, CurrentOption = "Red",
+    Name = "Enemy Color",
+    Flag = "EnemyCol",
+    Options = {"Pink", "Red", "Orange", "Yellow", "Purple", "White", "Cyan", "Green"},
+    CurrentOption = "Pink",
     Callback = function(v) S.EnemyColor = ENEMY_PALETTE[v] or S.EnemyColor end,
+})
+
+ColTab:CreateSection("Team Color")
+ColTab:CreateDropdown({
+    Name = "Team Color",
+    Flag = "TeamCol",
+    Options = {"Blue", "Green", "Cyan", "White", "Pink"},
+    CurrentOption = "Blue",
+    Callback = function(v) S.TeamColor = TEAM_PALETTE[v] or S.TeamColor end,
 })
 
 ColTab:CreateSection("FOV Circle Color")
 ColTab:CreateDropdown({
-    Name = "FOV Circle Color", Flag = "FOVCol",
-    Options = {"White","Red","Green","Blue","Yellow"}, CurrentOption = "White",
+    Name = "FOV Circle Color",
+    Flag = "FOVCol",
+    Options = {"Pink", "White", "Red", "Green", "Blue", "Yellow"},
+    CurrentOption = "Pink",
     Callback = function(v)
         local map = {
-            White  = Color3.fromRGB(255,255,255), Red  = Color3.fromRGB(255,60,60),
-            Green  = Color3.fromRGB(60,255,100),  Blue = Color3.fromRGB(60,150,255),
-            Yellow = Color3.fromRGB(255,220,50),
+            Pink   = Color3.fromRGB(255, 20, 147),
+            White  = Color3.fromRGB(255, 255, 255),
+            Red    = Color3.fromRGB(255, 60, 60),
+            Green  = Color3.fromRGB(60, 255, 100),
+            Blue   = Color3.fromRGB(60, 150, 255),
+            Yellow = Color3.fromRGB(255, 220, 50),
         }
         S.FOVColor = map[v] or S.FOVColor
     end,
 })
 
 -- ══ TAB 5 · Players ════════════════════════════════════════════════════════════
-local PlrTab = Window:CreateTab("Players", 4483362458)
+local PlrTab = Window:CreateTab("✦ PLAYERS", 4483362458)
 
 PlrTab:CreateSection("Whitelist (hide ESP + aim skip)")
 
@@ -535,34 +583,97 @@ local function nameList()
 end
 
 PlrTab:CreateDropdown({
-    Name = "Select Player", Options = nameList(),
-    CurrentOption = nameList()[1], Flag = "PlrSel",
+    Name = "Select Player",
+    Options = nameList(),
+    CurrentOption = nameList()[1],
+    Flag = "PlrSel",
     Callback = function() end,
 })
 
-PlrTab:CreateButton({ Name = "Whitelist Player", Callback = function()
-    local f = Rayfield.Flags["PlrSel"]
-    if not f then return end
-    local p = Players:FindFirstChild(f.CurrentOption)
-    if p then
-        whitelisted[p] = true
-        Rayfield:Notify({ Title = "Whitelisted", Content = f.CurrentOption .. " hidden from ESP & aim.", Duration = 3 })
+PlrTab:CreateButton({
+    Name = "Whitelist Player",
+    Callback = function()
+        local f = Rayfield.Flags["PlrSel"]
+        if not f then return end
+        local p = Players:FindFirstChild(f.CurrentOption)
+        if p then
+            whitelisted[p] = true
+            Rayfield:Notify({
+                Title = "✦ TINZZxXITERS ✦",
+                Content = f.CurrentOption .. " hidden from ESP & aim.",
+                Duration = 3
+            })
+        end
     end
-end})
+})
 
-PlrTab:CreateButton({ Name = "Remove from Whitelist", Callback = function()
-    local f = Rayfield.Flags["PlrSel"]
-    if not f then return end
-    local p = Players:FindFirstChild(f.CurrentOption)
-    if p then whitelisted[p] = nil end
-    Rayfield:Notify({ Title = "Removed", Content = "Player restored to ESP & aim.", Duration = 3 })
-end})
+PlrTab:CreateButton({
+    Name = "Remove from Whitelist",
+    Callback = function()
+        local f = Rayfield.Flags["PlrSel"]
+        if not f then return end
+        local p = Players:FindFirstChild(f.CurrentOption)
+        if p then whitelisted[p] = nil end
+        Rayfield:Notify({
+            Title = "✦ TINZZxXITERS ✦",
+            Content = "Player restored to ESP & aim.",
+            Duration = 3
+        })
+    end
+})
 
 PlrTab:CreateSection("Bulk")
-PlrTab:CreateButton({ Name = "Disable ALL ESP", Callback = function()
-    S.BoxOn = false; S.HighlightOn = false
-    S.TracerOn = false; S.HealthBarOn = false
-    S.NameOn = false; S.DistanceOn = false
-    for _, hl in pairs(highlights) do hl.Enabled = false end
-    Rayfield:Notify({ Title = "ESP Off", Content = "All ESP features disabled.", Duration = 3 })
-end})
+PlrTab:CreateButton({
+    Name = "Disable ALL ESP",
+    Callback = function()
+        S.BoxOn = false
+        S.HighlightOn = false
+        S.TracerOn = false
+        S.HealthBarOn = false
+        S.NameOn = false
+        S.DistanceOn = false
+        for _, hl in pairs(highlights) do hl.Enabled = false end
+        Rayfield:Notify({
+            Title = "✦ TINZZxXITERS ✦",
+            Content = "All ESP features disabled.",
+            Duration = 3
+        })
+    end
+})
+
+PlrTab:CreateButton({
+    Name = "Enable ALL ESP",
+    Callback = function()
+        S.BoxOn = true
+        S.HighlightOn = true
+        S.TracerOn = true
+        S.HealthBarOn = true
+        S.NameOn = true
+        S.DistanceOn = true
+        Rayfield:Notify({
+            Title = "✦ TINZZxXITERS ✦",
+            Content = "All ESP features enabled.",
+            Duration = 3
+        })
+    end
+})
+
+-- ===== WATERMARK =====
+local watermark = Instance.new("TextLabel", ESPGui)
+watermark.Size = UDim2.new(0, 200, 0, 20)
+watermark.Position = UDim2.new(1, -210, 1, -30)
+watermark.BackgroundTransparency = 1
+watermark.Text = "✦ TINZZxXITERS ✦ V8"
+watermark.TextColor3 = Color3.fromRGB(255, 20, 147)
+watermark.TextSize = 12
+watermark.Font = Enum.Font.GothamBold
+watermark.TextXAlignment = Enum.TextXAlignment.Right
+
+-- ===== NOTIFICATION =====
+Rayfield:Notify({
+    Title = "✦ TINZZxXITERS ✦",
+    Content = "System Loaded Successfully!",
+    Duration = 3
+})
+
+print("✦ TINZZxXITERS V8 Loaded ✦")
