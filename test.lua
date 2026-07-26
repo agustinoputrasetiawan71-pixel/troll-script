@@ -1,7 +1,6 @@
 --[[
-    TINZZxXITERS ESP + AIM ASSIST V8
-    Source: Owner ESP + Aim Assist
-    Fitur: ESP (Box, Tracer, Name, Health, Distance), Aim Assist, FOV Circle
+    TINZZxXITERS ESP + AIM ASSIST V9
+    Fix: Line thickness lebih tipis (0.5), ESP rapi
 ]]
 
 local Players = game:GetService("Players")
@@ -25,9 +24,9 @@ local S = {
     NameOn       = true,
     DistanceOn   = true,
     TeamCheck    = false,
-    EnemyColor   = Color3.fromRGB(255, 20, 147), -- Pink
-    TeamColor    = Color3.fromRGB(0, 150, 255),  -- Blue
-    BoxThickness = 2,
+    EnemyColor   = Color3.fromRGB(255, 20, 147),
+    TeamColor    = Color3.fromRGB(0, 150, 255),
+    BoxThickness = 1,
     TracerOrigin = "Bottom",
     FillAlpha    = 0.6,
     MaxDist      = 0,
@@ -39,7 +38,7 @@ local S = {
     AimBone       = "Head",
     AimTeamCheck  = true,
     ShowFOVCircle = true,
-    FOVColor      = Color3.fromRGB(255, 20, 147), -- Pink
+    FOVColor      = Color3.fromRGB(255, 20, 147),
 }
 
 -- ─── Color palettes ───────────────────────────────────────────────────────────
@@ -119,7 +118,7 @@ local function drawLine(a, b, color, thickness)
     ln.AnchorPoint      = Vector2.new(0.5, 0.5)
     ln.BackgroundColor3 = color
     ln.BorderSizePixel  = 0
-    ln.Size     = UDim2.fromOffset(len, thickness or S.BoxThickness)
+    ln.Size     = UDim2.fromOffset(len, math.max(0.5, thickness or S.BoxThickness))
     ln.Position = UDim2.fromOffset(mid.X, mid.Y)
     ln.Rotation = math.deg(math.atan2(d.Y, d.X))
 end
@@ -164,7 +163,7 @@ local function drawCircle(cx, cy, radius, color)
         local a2 = ((i+1) / FOV_SEGMENTS) * math.pi * 2
         local p1 = Vector2.new(cx + math.cos(a1) * radius, cy + math.sin(a1) * radius)
         local p2 = Vector2.new(cx + math.cos(a2) * radius, cy + math.sin(a2) * radius)
-        drawLine(p1, p2, color, 1)
+        drawLine(p1, p2, color, 0.5)
     end
 end
 
@@ -500,14 +499,14 @@ AimTab:CreateToggle({
 -- ══ TAB 3 · Style ════════════════════════════════════════════════════════════
 local StyleTab = Window:CreateTab("✦ STYLE", 4483362458)
 
-StyleTab:CreateSection("Box")
+StyleTab:CreateSection("Line Thickness")
 StyleTab:CreateSlider({
-    Name = "Box Thickness",
-    Range = {1, 5},
+    Name = "Box/Tracer Thickness (0.5 - 3)",
+    Range = {5, 30},
     Increment = 1,
-    CurrentValue = 2,
+    CurrentValue = 10,
     Flag = "BoxThk",
-    Callback = function(v) S.BoxThickness = v end,
+    Callback = function(v) S.BoxThickness = v / 10 end,
 })
 
 StyleTab:CreateSection("Tracer")
@@ -663,7 +662,7 @@ local watermark = Instance.new("TextLabel", ESPGui)
 watermark.Size = UDim2.new(0, 200, 0, 20)
 watermark.Position = UDim2.new(1, -210, 1, -30)
 watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V8"
+watermark.Text = "✦ TINZZxXITERS ✦ V9"
 watermark.TextColor3 = Color3.fromRGB(255, 20, 147)
 watermark.TextSize = 12
 watermark.Font = Enum.Font.GothamBold
@@ -676,4 +675,4 @@ Rayfield:Notify({
     Duration = 3
 })
 
-print("✦ TINZZxXITERS V8 Loaded ✦")
+print("✦ TINZZxXITERS V9 Loaded ✦")
