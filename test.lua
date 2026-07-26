@@ -1,617 +1,568 @@
---[[
-    TINZZxXITERS AIM & ESP V7 - BAGIAN 1
-    Fix: ESP warna, Line thickness, Dropdown, Name position
-]]
+-- LocalScript â†’ StarterPlayerScripts
+-- Owner ESP + Aim Assist | Rayfield UI
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local Players      = game:GetService("Players")
+local RunService   = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera       = workspace.CurrentCamera
 
--- ===== THEME COLORS =====
-local THEME = {
-    Pink = Color3.fromRGB(255, 20, 147),
-    DarkPink = Color3.fromRGB(200, 10, 110),
-    Black = Color3.fromRGB(15, 15, 17),
-    DarkBlack = Color3.fromRGB(25, 25, 27),
-    Blue = Color3.fromRGB(0, 150, 255),
-    White = Color3.fromRGB(255, 255, 255),
-    OffText = Color3.fromRGB(160, 160, 160),
-}
+local LocalPlayer  = Players.LocalPlayer
+local PlayerGui    = LocalPlayer:WaitForChild("PlayerGui")
 
--- ===== SETTINGS =====
-local Settings = {
-    -- AIM
-    Sticky = false,
-    WallCheck = true,
-    TeamCheck = false,
-    NPCs = false,
-    FOV = 150,
-    CircleVis = false,
-    
+-- â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+-- â”‚  YOUR ROBLOX USER ID HERE            â”‚
+-- â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+local OWNER_ID = 0 -- e.g. 12345678
+
+if LocalPlayer.UserId ~= OWNER_ID then return end
+
+-- â”€â”€â”€ Load Rayfield â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+-- â”€â”€â”€ Global Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local S = {
     -- ESP
-    ESP = false,
-    Tracers = false,
-    RainbowStyle = false,
-    ESPName = true,
-    ESPBox = false,
-    ESPLine = false,
-    ESPLineThickness = 1,
-    ESPLinePosition = "Top",
+    HighlightOn  = false,
+    BoxOn        = true,
+    TracerOn     = true,
+    HealthBarOn  = true,
+    NameOn       = true,
+    DistanceOn   = true,
+    TeamCheck    = false,
+    EnemyColor   = Color3.fromRGB(255, 60,  60),
+    TeamColor    = Color3.fromRGB(60,  200, 255),
+    BoxThickness = 2,
+    TracerOrigin = "Bottom",
+    FillAlpha    = 0.6,
+    MaxDist      = 0,
+
+    -- Aim Assist
+    AimAssistOn      = false,
+    AimStrength      = 0.08,  -- 0.01 (gentle) â†’ 0.3 (strong)
+    AimFOV           = 150,   -- radius in pixels to look for targets
+    AimBone          = "Head", -- "Head" | "HumanoidRootPart" | "UpperTorso"
+    AimTeamCheck     = true,  -- never aim at teammates
+    ShowFOVCircle    = true,
+    FOVColor         = Color3.fromRGB(255, 255, 255),
 }
 
--- ===== DRAWINGS =====
-local Circle = Drawing.new("Circle")
-Circle.Visible = false
-Circle.Thickness = 2
-Circle.NumSides = 64
-Circle.Radius = Settings.FOV
-Circle.Filled = false
+-- â”€â”€â”€ Color palettes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local ENEMY_PALETTE = {
+    Red    = Color3.fromRGB(255, 60,  60),
+    Orange = Color3.fromRGB(255, 140, 30),
+    Yellow = Color3.fromRGB(255, 220, 50),
+    Purple = Color3.fromRGB(180, 50,  255),
+    White  = Color3.fromRGB(255, 255, 255),
+}
+local TEAM_PALETTE = {
+    Blue  = Color3.fromRGB(60,  150, 255),
+    Green = Color3.fromRGB(60,  255, 100),
+    Cyan  = Color3.fromRGB(0,   255, 220),
+    White = Color3.fromRGB(255, 255, 255),
+}
 
--- ===== VISUAL CACHE =====
-local visualCache = {}
+-- â”€â”€â”€ ScreenGui â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local ESPGui = Instance.new("ScreenGui")
+ESPGui.Name           = "OwnerESP"
+ESPGui.ResetOnSpawn   = false
+ESPGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ESPGui.IgnoreGuiInset = true
+ESPGui.Parent         = PlayerGui
 
--- ===== UI SETUP =====
-local TixUI = Instance.new("ScreenGui")
-TixUI.Name = "TINZZ_AIM_ESP"
-TixUI.Parent = gethui and gethui() or game:GetService("CoreGui")
-TixUI.ResetOnSpawn = false
+-- â”€â”€â”€ Frame pool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local pool    = {}
+local poolIdx = 0
 
--- ===== TOGGLE ICON =====
-local TogglePanel = Instance.new("Frame", TixUI)
-TogglePanel.Size = UDim2.new(0, 50, 0, 50)
-TogglePanel.Position = UDim2.new(0, 15, 0, 15)
-TogglePanel.BackgroundColor3 = THEME.Black
-TogglePanel.Active = true
-TogglePanel.Draggable = true
-Instance.new("UICorner", TogglePanel).CornerRadius = UDim.new(1, 0)
-local ToggleStroke = Instance.new("UIStroke", TogglePanel)
-ToggleStroke.Thickness = 2
-ToggleStroke.Color = THEME.Pink
-
-local ToggleBtn = Instance.new("TextButton", TogglePanel)
-ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
-ToggleBtn.BackgroundTransparency = 1
-ToggleBtn.Text = "TZ"
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextColor3 = THEME.Pink
-ToggleBtn.TextSize = 20
-
--- ===== MAIN FRAME =====
-local Main = Instance.new("Frame", TixUI)
-local VisiblePos = UDim2.new(0.5, -200, 0.5, -200)
-local HiddenPos = UDim2.new(0.5, -200, 1.2, 0)
-Main.Size = UDim2.new(0, 400, 0, 420)
-Main.Position = HiddenPos
-Main.BackgroundColor3 = THEME.Black
-Main.Visible = false
-Main.Active = true
-Main.Draggable = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
-
-local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Thickness = 2
-MainStroke.Color = THEME.Pink
-
--- ===== TITLE =====
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 38)
-Title.Position = UDim2.new(0, 0, 0, 0)
-Title.Text = "✦ TINZZxXITERS ✦"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.BackgroundTransparency = 1
-Title.TextColor3 = THEME.Pink
-
-local SubTitle = Instance.new("TextLabel", Main)
-SubTitle.Size = UDim2.new(1, 0, 0, 16)
-SubTitle.Position = UDim2.new(0, 0, 0, 26)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "AIM • ESP • VISUAL"
-SubTitle.Font = Enum.Font.Gotham
-SubTitle.TextSize = 11
-SubTitle.TextColor3 = THEME.Blue
-SubTitle.TextXAlignment = Enum.TextXAlignment.Center
-
-local CloseBtn = Instance.new("TextButton", Main)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 4)
-CloseBtn.BackgroundTransparency = 1
-CloseBtn.Text = "✕"
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = THEME.Pink
-CloseBtn.TextSize = 20
-
--- ===== TAB SYSTEM =====
-local TabFrame = Instance.new("Frame", Main)
-TabFrame.Size = UDim2.new(1, -20, 0, 30)
-TabFrame.Position = UDim2.new(0, 10, 0, 46)
-TabFrame.BackgroundTransparency = 1
-
-local function CreateTab(name, xPos)
-    local btn = Instance.new("TextButton", TabFrame)
-    btn.Size = UDim2.new(0, 80, 1, 0)
-    btn.Position = UDim2.new(xPos, 0, 0, 0)
-    btn.BackgroundColor3 = THEME.DarkBlack
-    btn.BorderSizePixel = 1
-    btn.BorderColor3 = THEME.Pink
-    btn.Text = name
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13
-    btn.TextColor3 = THEME.White
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    return btn
+local function acquire(class)
+    poolIdx += 1
+    if pool[poolIdx] then
+        pool[poolIdx].Visible = true
+        return pool[poolIdx]
+    end
+    local o = Instance.new(class)
+    o.Parent = ESPGui
+    pool[poolIdx] = o
+    return o
 end
 
-local TabAIM = CreateTab("✦ AIM", 0)
-local TabESP = CreateTab("✦ ESP", 0.26)
-
--- ===== SCROLL AREA =====
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(1, -20, 1, -110)
-Scroll.Position = UDim2.new(0, 10, 0, 82)
-Scroll.BackgroundTransparency = 1
-Scroll.ScrollBarThickness = 3
-Scroll.ScrollBarImageColor3 = THEME.Pink
-
--- ===== CONTENT CONTAINERS =====
-local AIMContent = Instance.new("Frame", Scroll)
-AIMContent.Size = UDim2.new(1, 0, 0, 0)
-AIMContent.BackgroundTransparency = 1
-AIMContent.Visible = true
-
-local ESPContent = Instance.new("Frame", Scroll)
-ESPContent.Size = UDim2.new(1, 0, 0, 0)
-ESPContent.BackgroundTransparency = 1
-ESPContent.Visible = false
-
--- ===== UIListLayout =====
-local aimLayout = Instance.new("UIListLayout", AIMContent)
-aimLayout.Padding = UDim.new(0, 4)
-aimLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local espLayout = Instance.new("UIListLayout", ESPContent)
-espLayout.Padding = UDim.new(0, 4)
-espLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- ===== UPDATE SIZE =====
-local function updateSize()
-    local aimHeight = aimLayout.AbsoluteContentSize.Y
-    local espHeight = espLayout.AbsoluteContentSize.Y
-    AIMContent.Size = UDim2.new(1, 0, 0, aimHeight + 5)
-    ESPContent.Size = UDim2.new(1, 0, 0, espHeight + 5)
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(aimHeight, espHeight) + 30)
+local function flushPool()
+    for i = poolIdx + 1, #pool do
+        pool[i].Visible = false
+    end
+    poolIdx = 0
 end
 
--- ===== FUNGSI TOGGLE =====
-local function AddToggle(parent, text, settingKey, default, order)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = THEME.DarkBlack
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.LayoutOrder = order
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-    
-    local BStroke = Instance.new("UIStroke", btn)
-    BStroke.Thickness = 1
-    BStroke.Color = THEME.Pink
-    BStroke.Transparency = 0.5
+-- â”€â”€â”€ Draw primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    local Label = Instance.new("TextLabel", btn)
-    Label.Size = UDim2.new(1, -70, 1, 0)
-    Label.Position = UDim2.new(0, 12, 0, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.Font = Enum.Font.Gotham
-    Label.TextColor3 = THEME.White
-    Label.TextSize = 13
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local Status = Instance.new("TextLabel", btn)
-    Status.Size = UDim2.new(0, 45, 1, 0)
-    Status.Position = UDim2.new(1, -55, 0, 0)
-    Status.BackgroundTransparency = 1
-    Status.Text = default and "ON" or "OFF"
-    Status.Font = Enum.Font.GothamBold
-    Status.TextColor3 = default and THEME.Pink or THEME.OffText
-    Status.TextSize = 12
-    Status.TextXAlignment = Enum.TextXAlignment.Right
-
-    Settings[settingKey] = default
-
-    btn.MouseButton1Click:Connect(function()
-        Settings[settingKey] = not Settings[settingKey]
-        local s = Settings[settingKey]
-        Status.Text = s and "ON" or "OFF"
-        Status.TextColor3 = s and THEME.Pink or THEME.OffText
-        if settingKey == "CircleVis" then Circle.Visible = s end
-    end)
-    
-    return btn
+local function drawRect(x, y, w, h, color, t)
+    t = t or S.BoxThickness
+    local function bar(px, py, pw, ph)
+        local f = acquire("Frame")
+        f.BackgroundColor3 = color
+        f.BorderSizePixel  = 0
+        f.Size     = UDim2.fromOffset(pw, ph)
+        f.Position = UDim2.fromOffset(px, py)
+    end
+    bar(x - t/2,     y,         w + t, t)   -- top
+    bar(x - t/2,     y + h,     w + t, t)   -- bottom
+    bar(x,           y,         t,     h)    -- left
+    bar(x + w,       y,         t,     h)    -- right
 end
 
--- ===== FUNGSI SLIDER =====
-local function AddSlider(parent, text, settingKey, min, max, default, order)
-    local frame = Instance.new("Frame", parent)
-    frame.Size = UDim2.new(1, 0, 0, 45)
-    frame.BackgroundTransparency = 1
-    frame.LayoutOrder = order
-    
-    local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(1, 0, 0, 18)
-    label.Position = UDim2.new(0, 0, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text .. ": " .. tostring(default)
-    label.TextColor3 = THEME.White
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local slider = Instance.new("Frame", frame)
-    slider.Size = UDim2.new(1, 0, 0, 6)
-    slider.Position = UDim2.new(0, 0, 0, 26)
-    slider.BackgroundColor3 = THEME.DarkBlack
-    slider.BorderSizePixel = 1
-    slider.BorderColor3 = THEME.Blue
-    
-    local fill = Instance.new("Frame", slider)
-    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = THEME.Pink
+local function drawLine(a, b, color, thickness)
+    local d   = b - a
+    local len = d.Magnitude
+    if len < 1 then return end
+    local mid = (a + b) / 2
+    local ln  = acquire("Frame")
+    ln.AnchorPoint      = Vector2.new(0.5, 0.5)
+    ln.BackgroundColor3 = color
+    ln.BorderSizePixel  = 0
+    ln.Size     = UDim2.fromOffset(len, thickness or S.BoxThickness)
+    ln.Position = UDim2.fromOffset(mid.X, mid.Y)
+    ln.Rotation = math.deg(math.atan2(d.Y, d.X))
+end
+
+local function drawText(x, y, text, color, size)
+    local lbl = acquire("TextLabel")
+    lbl.AnchorPoint            = Vector2.new(0.5, 0.5)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3             = color
+    lbl.TextStrokeTransparency = 0.4
+    lbl.TextStrokeColor3       = Color3.new(0, 0, 0)
+    lbl.Font                   = Enum.Font.GothamBold
+    lbl.TextSize               = size or 13
+    lbl.Text                   = text
+    lbl.Size                   = UDim2.fromOffset(200, 20)
+    lbl.Position               = UDim2.fromOffset(x, y)
+end
+
+local function drawHealthBar(x, y, h, pct)
+    local barH = math.max(1, h * pct)
+    local bg   = acquire("Frame")
+    bg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    bg.BorderSizePixel  = 0
+    bg.Size     = UDim2.fromOffset(4, h)
+    bg.Position = UDim2.fromOffset(x, y)
+    local fill  = acquire("Frame")
+    fill.BackgroundColor3 = Color3.fromRGB(
+        math.floor((1 - pct) * 255),
+        math.floor(pct * 220),
+        40
+    )
     fill.BorderSizePixel = 0
-    
-    local drag = Instance.new("TextButton", slider)
-    drag.Size = UDim2.new(0, 14, 0, 14)
-    drag.Position = UDim2.new((default - min) / (max - min), -7, 0, -4)
-    drag.BackgroundColor3 = THEME.White
-    drag.BorderSizePixel = 2
-    drag.BorderColor3 = THEME.Pink
-    drag.Text = ""
-    
-    local value = default
-    local dragging = false
-    
-    drag.MouseButton1Down:Connect(function() dragging = true end)
-    game:GetService("UserInputService").InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-    
-    local mouse = LocalPlayer:GetMouse()
-    mouse.Move:Connect(function()
-        if not dragging then return end
-        local pos = math.clamp((mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
-        value = min + (max - min) * pos
-        value = math.round(value)
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        drag.Position = UDim2.new(pos, -7, 0, -4)
-        label.Text = text .. ": " .. tostring(value)
-        Settings[settingKey] = value
-        if settingKey == "FOV" then Circle.Radius = value end
-    end)
-    
-    return frame
+    fill.Size     = UDim2.fromOffset(4, barH)
+    fill.Position = UDim2.fromOffset(x, y + (h - barH))
 end
 
--- ===== FUNGSI DROPDOWN (FIX) =====
-local function AddDropdown(parent, text, settingKey, options, default, order)
-    local frame = Instance.new("Frame", parent)
-    frame.Size = UDim2.new(1, 0, 0, 34)
-    frame.BackgroundColor3 = THEME.DarkBlack
-    frame.LayoutOrder = order
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 4)
-    
-    local label = Instance.new("TextLabel", frame)
-    label.Size = UDim2.new(0.5, 0, 1, 0)
-    label.Position = UDim2.new(0, 12, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Text = text
-    label.TextColor3 = THEME.White
-    label.TextSize = 13
-    label.Font = Enum.Font.Gotham
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local dropdown = Instance.new("TextButton", frame)
-    dropdown.Size = UDim2.new(0.4, 0, 1, -6)
-    dropdown.Position = UDim2.new(0.55, 0, 0, 3)
-    dropdown.BackgroundColor3 = THEME.Black
-    dropdown.BorderSizePixel = 1
-    dropdown.BorderColor3 = THEME.Pink
-    dropdown.Text = default
-    dropdown.TextColor3 = THEME.White
-    dropdown.TextSize = 12
-    dropdown.Font = Enum.Font.Gotham
-    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 4)
-    
-    Settings[settingKey] = default
-    local currentIndex = 1
-    
-    dropdown.MouseButton1Click:Connect(function()
-        currentIndex = currentIndex % #options + 1
-        local value = options[currentIndex]
-        dropdown.Text = value
-        Settings[settingKey] = value
-        -- Update posisi name tag
-        for _, char in pairs(workspace:GetChildren()) do
-            local nameTag = char:FindFirstChild("TINZZ_NameTag")
-            if nameTag then
-                if value == "Top" then
-                    nameTag.StudsOffset = Vector3.new(0, 4, 0)
-                elseif value == "Center" then
-                    nameTag.StudsOffset = Vector3.new(0, 0, 0)
-                elseif value == "Bottom" then
-                    nameTag.StudsOffset = Vector3.new(0, -3, 0)
-                end
-            end
-        end
-    end)
-    
-    return frame
+-- FOV circle drawn as many small line segments
+local FOV_SEGMENTS = 40
+local function drawCircle(cx, cy, radius, color)
+    for i = 0, FOV_SEGMENTS - 1 do
+        local a1 = (i     / FOV_SEGMENTS) * math.pi * 2
+        local a2 = ((i+1) / FOV_SEGMENTS) * math.pi * 2
+        local p1 = Vector2.new(cx + math.cos(a1) * radius, cy + math.sin(a1) * radius)
+        local p2 = Vector2.new(cx + math.cos(a2) * radius, cy + math.sin(a2) * radius)
+        drawLine(p1, p2, color, 1)
+    end
 end
 
--- ===== BUILD AIM TAB =====
-AddToggle(AIMContent, "✦ Sticky Aim", "Sticky", false, 1)
-AddToggle(AIMContent, "✦ Wall Check", "WallCheck", true, 2)
-AddToggle(AIMContent, "✦ Team Check", "TeamCheck", false, 3)
-AddToggle(AIMContent, "✦ Include NPCs", "NPCs", false, 4)
-AddToggle(AIMContent, "✦ Show FOV Circle", "CircleVis", false, 5)
-AddSlider(AIMContent, "✦ FOV Radius", "FOV", 50, 300, 150, 6)
+-- â”€â”€â”€ Highlight pool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local highlights = {}
 
--- ===== BUILD ESP TAB =====
-AddToggle(ESPContent, "✦ Enable ESP", "ESP", false, 1)
-AddToggle(ESPContent, "✦ Tracers (Line)", "Tracers", false, 2)
-AddToggle(ESPContent, "✦ Rainbow Mode", "RainbowStyle", false, 3)
-AddToggle(ESPContent, "✦ Show Name", "ESPName", true, 4)
-AddToggle(ESPContent, "✦ Show Box", "ESPBox", false, 5)
-AddSlider(ESPContent, "✦ Line Thickness", "ESPLineThickness", 1, 5, 1, 6)
-AddDropdown(ESPContent, "✦ Name Position", "ESPLinePosition", {"Top", "Center", "Bottom"}, "Top", 7)
+local function ensureHL(player)
+    if not highlights[player] then
+        local hl = Instance.new("Highlight")
+        hl.FillTransparency    = S.FillAlpha
+        hl.OutlineTransparency = 0
+        hl.Enabled = false
+        hl.Parent  = workspace
+        highlights[player] = hl
+    end
+    return highlights[player]
+end
 
--- ===== UPDATE SIZE =====
-task.wait(0.1)
-updateSize()
-aimLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
-espLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
-
--- ===== TAB SWITCHING =====
-TabAIM.MouseButton1Click:Connect(function()
-    AIMContent.Visible = true
-    ESPContent.Visible = false
-    TabAIM.BackgroundColor3 = THEME.Pink
-    TabESP.BackgroundColor3 = THEME.DarkBlack
-    TabAIM.TextColor3 = THEME.Black
-    TabESP.TextColor3 = THEME.White
-    Scroll.CanvasPosition = 0
-    updateSize()
+Players.PlayerRemoving:Connect(function(p)
+    if highlights[p] then highlights[p]:Destroy(); highlights[p] = nil end
 end)
 
-TabESP.MouseButton1Click:Connect(function()
-    AIMContent.Visible = false
-    ESPContent.Visible = true
-    TabESP.BackgroundColor3 = THEME.Pink
-    TabAIM.BackgroundColor3 = THEME.DarkBlack
-    TabESP.TextColor3 = THEME.Black
-    TabAIM.TextColor3 = THEME.White
-    Scroll.CanvasPosition = 0
-    updateSize()
-end)
+-- â”€â”€â”€ Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local whitelisted = {}
 
-TabAIM.BackgroundColor3 = THEME.Pink
-TabAIM.TextColor3 = THEME.Black
-
--- ===== OPEN/CLOSE =====
-ToggleBtn.MouseButton1Click:Connect(function()
-    Main.Visible = true
-    TogglePanel.Visible = false
-    Main:TweenPosition(VisiblePos, "Out", "Quart", 0.5, true)
-end)
-
-CloseBtn.MouseButton1Click:Connect(function()
-    Main:TweenPosition(HiddenPos, "In", "Quart", 0.4, true, function()
-        Main.Visible = false
-        TogglePanel.Visible = true
-    end)
-end)
-
--- ===== WALL CHECK =====
-local function isVisible(targetPart)
-    if not Settings.WallCheck then return true end
-    local ignoreList = {LocalPlayer.Character, Camera}
-    local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 1000)
-    local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
-    if hit and hit:IsDescendantOf(targetPart.Parent) then return true end
+local function shouldSkip(p)
+    if whitelisted[p] then return true end
+    if S.TeamCheck and p.Team and p.Team == LocalPlayer.Team then return true end
     return false
 end
 
--- ===== GET CLOSEST TARGET =====
-local function getClosest()
-    local target, shortestFOV = nil, Settings.FOV
-    local potentials = {}
-    
-    for _,v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-            if Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
-            table.insert(potentials, v.Character.Head)
-        end
-    end
-    
-    if Settings.NPCs then
-        for _,v in pairs(workspace:GetDescendants()) do
-            if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Head") and v.Humanoid.Health > 0 then
-                if not Players:GetPlayerFromCharacter(v) then table.insert(potentials, v.Head) end
-            end
-        end
-    end
-
-    for _, head in pairs(potentials) do
-        local pos, vis = Camera:WorldToViewportPoint(head.Position)
-        if vis and isVisible(head) then
-            local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-            if mag < shortestFOV then 
-                target = head 
-                shortestFOV = mag 
-            end
-        end
-    end
-    return target
+local function getOrigin2D()
+    local vp = Camera.ViewportSize
+    if S.TracerOrigin == "Center" then return Vector2.new(vp.X/2, vp.Y/2)
+    elseif S.TracerOrigin == "Top"    then return Vector2.new(vp.X/2, 0)
+    else                                   return Vector2.new(vp.X/2, vp.Y) end
 end
 
--- ===== GET RAINBOW =====
-local function getRainbow()
-    return Color3.fromHSV(tick() % 5 / 5, 0.7, 1)
+local function getCharBox(char)
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    local cf = root.CFrame
+    local sx, sy, sz = 1.1, 2.6, 0.6
+    local pts = {
+        cf*Vector3.new( sx, sy, sz), cf*Vector3.new(-sx, sy, sz),
+        cf*Vector3.new( sx,-sy, sz), cf*Vector3.new(-sx,-sy, sz),
+        cf*Vector3.new( sx, sy,-sz), cf*Vector3.new(-sx, sy,-sz),
+        cf*Vector3.new( sx,-sy,-sz), cf*Vector3.new(-sx,-sy,-sz),
+    }
+    local mnX, mnY, mxX, mxY = math.huge, math.huge, -math.huge, -math.huge
+    local hit = false
+    for _, v in ipairs(pts) do
+        local sp, on = Camera:WorldToViewportPoint(v)
+        if sp.Z > 0 then
+            hit = true
+            mnX = math.min(mnX, sp.X); mnY = math.min(mnY, sp.Y)
+            mxX = math.max(mxX, sp.X); mxY = math.max(mxY, sp.Y)
+        end
+    end
+    if not hit then return nil end
+    return mnX, mnY, mxX - mnX, mxY - mnY
 end
 
--- ===== MAIN LOOP =====
+-- â”€â”€â”€ Aim Assist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+-- Finds the closest valid target within the FOV circle and gently nudges
+-- the camera CFrame toward their aim bone each frame.
+-- Strength slider controls the lerp alpha (how quickly it pulls).
+
+local function getAimTarget()
+    local vp      = Camera.ViewportSize
+    local center  = Vector2.new(vp.X / 2, vp.Y / 2)
+    local bestDist = S.AimFOV
+    local bestTarget = nil
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == LocalPlayer then continue end
+        if S.AimTeamCheck and p.Team and p.Team == LocalPlayer.Team then continue end
+        if whitelisted[p] then continue end
+
+        local char = p.Character
+        if not char then continue end
+
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then continue end
+
+        local bone = char:FindFirstChild(S.AimBone)
+                  or char:FindFirstChild("HumanoidRootPart")
+        if not bone then continue end
+
+        local sp, onScreen = Camera:WorldToViewportPoint(bone.Position)
+        if not onScreen or sp.Z <= 0 then continue end
+
+        local screenPos = Vector2.new(sp.X, sp.Y)
+        local dist2D    = (screenPos - center).Magnitude
+
+        if dist2D < bestDist then
+            bestDist   = dist2D
+            bestTarget = bone
+        end
+    end
+
+    return bestTarget
+end
+
+-- â”€â”€â”€ Render loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local myRoot = nil
+LocalPlayer.CharacterAdded:Connect(function(c)
+    myRoot = c:WaitForChild("HumanoidRootPart")
+end)
+if LocalPlayer.Character then
+    myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+end
+
 RunService.RenderStepped:Connect(function()
-    local accent = Settings.RainbowStyle and getRainbow() or THEME.Pink
-    
-    -- Update Circle
-    Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    Circle.Color = accent
-    Circle.Visible = Settings.CircleVis
-    Circle.Radius = Settings.FOV
-    
-    -- Update UI Colors
-    MainStroke.Color = accent
-    ToggleStroke.Color = accent
-    Title.TextColor3 = accent
+    poolIdx = 0
 
-    -- AIM STICKY
-    if Settings.Sticky then
-        local lock = getClosest()
-        if lock then 
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, lock.Position) 
+    -- â”€â”€ Aim Assist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if S.AimAssistOn then
+        local target = getAimTarget()
+        if target then
+            local targetCF  = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame   = Camera.CFrame:Lerp(targetCF, S.AimStrength)
         end
     end
 
-    -- ===== VISUAL PROCESSING =====
-    local targets = {}
-    for _, p in pairs(Players:GetPlayers()) do 
-        if p ~= LocalPlayer and p.Character then 
-            table.insert(targets, p.Character) 
-        end 
+    -- â”€â”€ FOV Circle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if S.ShowFOVCircle and S.AimAssistOn then
+        local vp = Camera.ViewportSize
+        drawCircle(vp.X/2, vp.Y/2, S.AimFOV, S.FOVColor)
     end
-    
-    for _, char in pairs(targets) do
-        if not visualCache[char] then
-            visualCache[char] = {
-                Line = Drawing.new("Line"),
-                Highlight = Instance.new("Highlight", TixUI)
-            }
-        end
-        
-        local visual = visualCache[char]
-        local head = char:FindFirstChild("Head")
-        local hum = char:FindFirstChild("Humanoid")
-        local isAlive = head and hum and hum.Health > 0
-        
-        -- ===== TRACERS =====
-        if Settings.Tracers and isAlive then
-            local pos, vis = Camera:WorldToViewportPoint(head.Position)
-            if vis then
-                visual.Line.Visible = true
-                visual.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                visual.Line.To = Vector2.new(pos.X, pos.Y)
-                visual.Line.Color = accent
-                visual.Line.Thickness = Settings.ESPLineThickness
-            else
-                visual.Line.Visible = false
-            end
+
+    -- â”€â”€ Per-player ESP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+
+        local skip  = shouldSkip(player)
+        local color = (S.TeamCheck and player.Team == LocalPlayer.Team)
+                      and S.TeamColor or S.EnemyColor
+
+        -- Highlight
+        local hl   = ensureHL(player)
+        local char = player.Character
+        if char then
+            hl.Adornee          = char
+            hl.FillColor        = color
+            hl.OutlineColor     = color
+            hl.FillTransparency = S.FillAlpha
+            hl.Enabled          = S.HighlightOn and not skip
         else
-            visual.Line.Visible = false
+            hl.Enabled = false
         end
 
-        -- ===== HIGHLIGHT ESP (FIX WARNA) =====
-        visual.Highlight.Enabled = Settings.ESP and isAlive
-        visual.Highlight.Adornee = char
-        visual.Highlight.FillColor = accent
-        visual.Highlight.OutlineColor = accent
-        visual.Highlight.FillTransparency = 0.4
-        visual.Highlight.OutlineTransparency = 0.2
-        
-        -- ===== NAME TAG =====
-        if Settings.ESPName and isAlive then
-            local nameTag = char:FindFirstChild("TINZZ_NameTag")
-            if not nameTag then
-                nameTag = Instance.new("BillboardGui")
-                nameTag.Name = "TINZZ_NameTag"
-                nameTag.Size = UDim2.new(0, 200, 0, 30)
-                nameTag.AlwaysOnTop = true
-                
-                local pos = Settings.ESPLinePosition
-                if pos == "Top" then
-                    nameTag.StudsOffset = Vector3.new(0, 4, 0)
-                elseif pos == "Center" then
-                    nameTag.StudsOffset = Vector3.new(0, 0, 0)
-                elseif pos == "Bottom" then
-                    nameTag.StudsOffset = Vector3.new(0, -3, 0)
-                end
-                
-                nameTag.Parent = char
-                
-                local label = Instance.new("TextLabel")
-                label.Name = "Label"
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.BackgroundTransparency = 1
-                label.TextColor3 = accent
-                label.TextSize = 14
-                label.TextStrokeTransparency = 0.2
-                label.TextStrokeColor3 = THEME.Black
-                label.Font = Enum.Font.GothamBold
-                label.Parent = nameTag
-            end
-            
-            local label = nameTag:FindFirstChild("Label")
-            if label then
-                label.Text = char.Name .. " [" .. math.floor(hum.Health) .. "HP]"
-                label.TextColor3 = accent
-            end
-            nameTag.Enabled = true
-        else
-            local nameTag = char:FindFirstChild("TINZZ_NameTag")
-            if nameTag then nameTag:Destroy() end
+        if not char or skip then continue end
+
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+
+        local dist = myRoot and (myRoot.Position - root.Position).Magnitude or 0
+        if S.MaxDist > 0 and dist > S.MaxDist then continue end
+
+        local rsp, onScreen = Camera:WorldToViewportPoint(root.Position)
+        if not onScreen or rsp.Z <= 0 then continue end
+        local rootV2 = Vector2.new(rsp.X, rsp.Y)
+
+        local bx, by, bw, bh = getCharBox(char)
+        local hasBox = bx ~= nil
+
+        -- Box
+        if S.BoxOn and hasBox then
+            drawRect(bx, by, bw, bh, color, S.BoxThickness)
         end
-        
-        -- ===== BOX =====
-        if Settings.ESPBox and isAlive then
-            local box = char:FindFirstChild("TINZZ_Box")
-            if not box then
-                box = Instance.new("BoxHandleAdornment")
-                box.Name = "TINZZ_Box"
-                box.Size = Vector3.new(3, 5, 1.5)
-                box.ZIndex = 0
-                box.AlwaysOnTop = true
-                box.Adornee = char:FindFirstChild("HumanoidRootPart")
-                box.Parent = char
-            end
-            box.Color3 = accent
-            box.Transparency = 0.4
-            box.Visible = true
-        else
-            local box = char:FindFirstChild("TINZZ_Box")
-            if box then box:Destroy() end
+
+        -- Health bar
+        if S.HealthBarOn and hasBox then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local pct = hum and math.clamp(hum.Health / hum.MaxHealth, 0, 1) or 0
+            drawHealthBar(bx - 8, by, bh, pct)
+        end
+
+        -- Name
+        if S.NameOn and hasBox then
+            drawText(bx + bw/2, by - 16, player.DisplayName, color, 13)
+        end
+
+        -- Distance
+        if S.DistanceOn and hasBox then
+            drawText(bx + bw/2, by + bh + 4,
+                string.format("[%d studs]", math.floor(dist)),
+                Color3.fromRGB(200, 200, 200), 11)
+        end
+
+        -- Tracer
+        if S.TracerOn then
+            drawLine(getOrigin2D(), rootV2, color, S.BoxThickness)
         end
     end
+
+    flushPool()
 end)
 
--- ===== WATERMARK =====
-local watermark = Instance.new("TextLabel", TixUI)
-watermark.Size = UDim2.new(0, 200, 0, 20)
-watermark.Position = UDim2.new(1, -210, 1, -30)
-watermark.BackgroundTransparency = 1
-watermark.Text = "✦ TINZZxXITERS ✦ V7"
-watermark.TextColor3 = THEME.Pink
-watermark.TextSize = 12
-watermark.Font = Enum.Font.GothamBold
-watermark.TextXAlignment = Enum.TextXAlignment.Right
+-- â”€â”€â”€ Rayfield UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+local Window = Rayfield:CreateWindow({
+    Name            = "Owner ESP",
+    LoadingTitle    = "ESP Panel",
+    LoadingSubtitle = "Owner Only",
+    ConfigurationSaving = { Enabled = false },
+    Discord         = { Enabled = false },
+    KeySystem       = false,
+})
 
--- ===== NOTIFICATION =====
-local function notify(msg)
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "TINZZxXITERS",
-        Text = msg,
-        Duration = 2
-    })
+-- â•â• TAB 1 Â· Features â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+local FeatTab = Window:CreateTab("Features", 4483362458)
+
+FeatTab:CreateSection("Visuals")
+FeatTab:CreateToggle({ Name = "Box ESP",        CurrentValue = true,  Flag = "BoxOn",
+    Callback = function(v) S.BoxOn       = v end })
+FeatTab:CreateToggle({ Name = "Highlight",      CurrentValue = false, Flag = "HLOn",
+    Callback = function(v) S.HighlightOn = v end })
+FeatTab:CreateToggle({ Name = "Tracers",        CurrentValue = true,  Flag = "TracOn",
+    Callback = function(v) S.TracerOn    = v end })
+FeatTab:CreateToggle({ Name = "Health Bar",     CurrentValue = true,  Flag = "HPOn",
+    Callback = function(v) S.HealthBarOn = v end })
+FeatTab:CreateToggle({ Name = "Name Tag",       CurrentValue = true,  Flag = "NameOn",
+    Callback = function(v) S.NameOn      = v end })
+FeatTab:CreateToggle({ Name = "Distance Label", CurrentValue = true,  Flag = "DistOn",
+    Callback = function(v) S.DistanceOn  = v end })
+
+FeatTab:CreateSection("Team")
+FeatTab:CreateToggle({ Name = "Team Check (hide allies)", CurrentValue = false, Flag = "TmChk",
+    Callback = function(v) S.TeamCheck = v end })
+
+FeatTab:CreateSection("Performance")
+FeatTab:CreateSlider({
+    Name = "Max Render Distance (0 = unlimited)",
+    Range = {0, 1000}, Increment = 50, CurrentValue = 0, Flag = "MaxDist",
+    Callback = function(v) S.MaxDist = v end,
+})
+
+-- â•â• TAB 2 Â· Aim Assist â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+local AimTab = Window:CreateTab("Aim Assist", 4483362458)
+
+AimTab:CreateSection("Toggle")
+
+AimTab:CreateToggle({
+    Name = "Enable Aim Assist",
+    CurrentValue = false,
+    Flag = "AimOn",
+    Callback = function(v)
+        S.AimAssistOn = v
+    end,
+})
+
+AimTab:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = true,
+    Flag = "ShowFOV",
+    Callback = function(v)
+        S.ShowFOVCircle = v
+    end,
+})
+
+AimTab:CreateSection("Strength")
+
+AimTab:CreateSlider({
+    Name = "Aim Strength",
+    Range = {1, 30},
+    Increment = 1,
+    CurrentValue = 8,  -- maps to 0.08
+    Flag = "AimStr",
+    Callback = function(v)
+        S.AimStrength = v / 100  -- 1â†’0.01 (barely noticeable), 30â†’0.30 (very strong)
+    end,
+})
+
+AimTab:CreateSection("Field of View")
+
+AimTab:CreateSlider({
+    Name = "FOV Radius (pixels)",
+    Range = {30, 400},
+    Increment = 10,
+    CurrentValue = 150,
+    Flag = "AimFOV",
+    Callback = function(v)
+        S.AimFOV = v
+    end,
+})
+
+AimTab:CreateSection("Target Bone")
+
+AimTab:CreateDropdown({
+    Name = "Aim At",
+    Options = {"Head", "UpperTorso", "HumanoidRootPart"},
+    CurrentOption = "Head",
+    Flag = "AimBone",
+    Callback = function(v)
+        S.AimBone = v
+    end,
+})
+
+AimTab:CreateSection("Safety")
+
+AimTab:CreateToggle({
+    Name = "Never Aim at Teammates",
+    CurrentValue = true,
+    Flag = "AimTeamChk",
+    Callback = function(v)
+        S.AimTeamCheck = v
+    end,
+})
+
+-- â•â• TAB 3 Â· Style â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+local StyleTab = Window:CreateTab("Style", 4483362458)
+
+StyleTab:CreateSection("Box")
+StyleTab:CreateSlider({
+    Name = "Box Thickness", Range = {1, 5}, Increment = 1, CurrentValue = 2, Flag = "BoxThk",
+    Callback = function(v) S.BoxThickness = v end,
+})
+
+StyleTab:CreateSection("Tracer")
+StyleTab:CreateDropdown({
+    Name = "Tracer Origin", Options = {"Bottom","Center","Top"},
+    CurrentOption = "Bottom", Flag = "TrOrigin",
+    Callback = function(v) S.TracerOrigin = v end,
+})
+
+StyleTab:CreateSection("Highlight")
+StyleTab:CreateSlider({
+    Name = "Fill Transparency (0=solid 10=hidden)",
+    Range = {0,10}, Increment = 1, CurrentValue = 6, Flag = "FillAlpha",
+    Callback = function(v) S.FillAlpha = v / 10 end,
+})
+
+-- â•â• TAB 4 Â· Colors â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+local ColTab = Window:CreateTab("Colors", 4483362458)
+
+ColTab:CreateSection("Enemy Color")
+ColTab:CreateDropdown({
+    Name = "Enemy Color", Flag = "EnemyCol",
+    Options = {"Red","Orange","Yellow","Purple","White"}, CurrentOption = "Red",
+    Callback = function(v) S.EnemyColor = ENEMY_PALETTE[v] or S.EnemyColor end,
+})
+
+ColTab:CreateSection("FOV Circle Color")
+ColTab:CreateDropdown({
+    Name = "FOV Circle Color", Flag = "FOVCol",
+    Options = {"White","Red","Green","Blue","Yellow"}, CurrentOption = "White",
+    Callback = function(v)
+        local map = {
+            White  = Color3.fromRGB(255,255,255), Red  = Color3.fromRGB(255,60,60),
+            Green  = Color3.fromRGB(60,255,100),  Blue = Color3.fromRGB(60,150,255),
+            Yellow = Color3.fromRGB(255,220,50),
+        }
+        S.FOVColor = map[v] or S.FOVColor
+    end,
+})
+
+-- ══ TAB 5 · Players ════════════════════════════════════════════════════════════
+local PlrTab = Window:CreateTab("Players", 4483362458)
+
+PlrTab:CreateSection("Whitelist (hide ESP + aim skip)")
+
+local function nameList()
+    local t = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then table.insert(t, p.Name) end
+    end
+    return #t > 0 and t or {"(empty)"}
 end
 
-notify("✦ System Loaded ✦")
-print("✦ TINZZxXITERS V7 Loaded ✦")
+PlrTab:CreateDropdown({
+    Name = "Select Player", Options = nameList(),
+    CurrentOption = nameList()[1], Flag = "PlrSel",
+    Callback = function() end,
+})
+
+PlrTab:CreateButton({ Name = "Whitelist Player", Callback = function()
+    local f = Rayfield.Flags["PlrSel"]
+    if not f then return end
+    local p = Players:FindFirstChild(f.CurrentOption)
+    if p then
+        whitelisted[p] = true
+        Rayfield:Notify({ Title = "Whitelisted", Content = f.CurrentOption .. " hidden from ESP & aim.", Duration = 3 })
+    end
+end})
+
+PlrTab:CreateButton({ Name = "Remove from Whitelist", Callback = function()
+    local f = Rayfield.Flags["PlrSel"]
+    if not f then return end
+    local p = Players:FindFirstChild(f.CurrentOption)
+    if p then whitelisted[p] = nil end
+    Rayfield:Notify({ Title = "Removed", Content = "Player restored to ESP & aim.", Duration = 3 })
+end})
+
+PlrTab:CreateSection("Bulk")
+PlrTab:CreateButton({ Name = "Disable ALL ESP", Callback = function()
+    S.BoxOn = false; S.HighlightOn = false
+    S.TracerOn = false; S.HealthBarOn = false
+    S.NameOn = false; S.DistanceOn = false
+    for _, hl in pairs(highlights) do hl.Enabled = false end
+    Rayfield:Notify({ Title = "ESP Off", Content = "All ESP features disabled.", Duration = 3 })
+end})
